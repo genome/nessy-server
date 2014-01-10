@@ -30,11 +30,8 @@ def heartbeat(connection, name, secret):
                 % (secret, name))
     elif code == -2:
         raise RuntimeError('Lock (%s) does not exist' % name)
-    elif code == -3:
-        raise RuntimeError('CRITICAL: timeout key inaccessible for lock (%s)'
-                % name)
     else:
-        raise RuntimeError('Unknown error code (%s)' % code)
+        raise RuntimeError('Unknown error code (%s): %s' % (code, message))
 
 
 _release_lock_script = Script(lua.load('release_lock'))
@@ -54,7 +51,7 @@ def release_lock(connection, name, secret):
     elif code == -2:
         raise RuntimeError('Lock (%s) does not exist' % name)
     else:
-        raise RuntimeError('Unknown error code (%s)' % code)
+        raise RuntimeError('Unknown error code (%s): %s' % (code, message))
 
 
 def _timeout_key(name):

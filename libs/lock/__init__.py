@@ -1,12 +1,17 @@
-def get_lock(connection, name, exclusive=True, timeout=600):
-    secret = str(connection.incr('last_lock_num'))
-    success = connection.set(name, secret, nx=True, ex=timeout)
-    if success:
-        connection.set(_timeout_key(name), timeout, ex=timeout)
-        return secret
+from libs.lock import lua
+from libs.lock.script import Script
 
+
+_get_lock_script = Script(lua.load('get_lock'))
+def get_lock(connection, name, exclusive=True, timeout=600):
+    secret, message = _get_lock_script(connection,
+            keys=['last_lock_num', name, _timeout_key(name)],
+            args=[timeout])
+    if secret > 0:
+        return str(secret)
     else:
         return
+
 
 def heartbeat(connection, name, secret):
     if secret is None:
@@ -37,7 +42,6 @@ def release_lock(connection, name, secret):
         raise RuntimeError(
                 'Incorrect (%s) secret supplied for lock resource "%s".'
                 % (secret, name))
-
 
 
 def _timeout_key(name):

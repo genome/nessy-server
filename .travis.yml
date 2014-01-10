@@ -1,0 +1,13 @@
+language: python
+python: "2.7"
+
+services:
+    - redis-server
+
+env:
+    global:
+        - DJANGO_SETTINGS_MODULE=gsc_lock.settings.production
+        - GSC_LOCK_SECRET_KEY=testing*secret*key
+
+install: pip install tox
+script: tox

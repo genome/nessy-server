@@ -5,8 +5,7 @@ import unittest
 from libs import lock
 from libs.lock import exceptions
 
-
-class ExclusiveLockNoContentionTest(unittest.TestCase):
+class LockDataTest(unittest.TestCase):
     def setUp(self):
         self.connection = redis.Redis()
         self.connection.flushall()
@@ -23,6 +22,28 @@ class ExclusiveLockNoContentionTest(unittest.TestCase):
         self.assertIsNotNone(result.request_id)
         self.assertEqual(result.request_id, result.owner_id)
         self.assertEqual(result.owner_data, data)
+
+    def test_get_returns_owner_data(self):
+        lock_name = 'foo'
+        data = {
+            'bar': 'baz'
+        }
+
+        result = lock.request_lock(
+                self.connection, lock_name, timeout_seconds=1, data=data)
+        self.assertTrue(result.success)
+
+        new_result = lock.request_lock(
+                self.connection, lock_name, timeout_seconds=1)
+        self.assertFalse(new_result.success)
+        self.assertEqual(result.request_id, new_result.owner_id)
+        self.assertEqual(data, new_result.owner_data)
+
+
+class ExclusiveLockNoContentionTest(unittest.TestCase):
+    def setUp(self):
+        self.connection = redis.Redis()
+        self.connection.flushall()
 
     def test_get_released_lock(self):
         lock_name = 'foo'
@@ -130,28 +151,6 @@ class ExclusiveLockNoContentionTest(unittest.TestCase):
 
         lock.release_lock(self.connection, lock_name_a, result_a.request_id)
         lock.release_lock(self.connection, lock_name_b, result_b.request_id)
-
-
-class ExclusiveLockContentionTest(unittest.TestCase):
-    def setUp(self):
-        self.connection = redis.Redis()
-        self.connection.flushall()
-
-    def test_get_returns_owner_data(self):
-        lock_name = 'foo'
-        data = {
-            'bar': 'baz'
-        }
-
-        result = lock.request_lock(
-                self.connection, lock_name, timeout_seconds=1, data=data)
-        self.assertTrue(result.success)
-
-        new_result = lock.request_lock(
-                self.connection, lock_name, timeout_seconds=1)
-        self.assertFalse(new_result.success)
-        self.assertEqual(result.request_id, new_result.owner_id)
-        self.assertEqual(data, new_result.owner_data)
 
 
 if __name__ == '__main__':

@@ -8,8 +8,8 @@ if redis.call('EXISTS', lock_key) ~= 0 then
     return {-1, 'Lock exists'}
 end
 
-local secret = redis.call('INCR', last_lock_num_key)
-redis.call('SET', lock_key, secret, 'EX', timeout)
+local request_id = redis.call('INCR', last_lock_num_key)
+redis.call('SET', lock_key, request_id, 'EX', timeout)
 redis.call('SET', timeout_key, timeout, 'EX', timeout)
 
-return {secret, 'Success'}
+return {request_id, 'Success'}

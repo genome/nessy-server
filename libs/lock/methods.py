@@ -2,19 +2,21 @@ from libs.lock import exceptions
 from libs.lock import lua
 from libs.lock.script import Script
 
+import simplejson
+
 __all__ = ['get_lock', 'heartbeat', 'release_lock']
 
 
 _get_lock_script = Script(lua.load('get_lock'))
-def get_lock(connection, name, timeout_seconds=None, timeout_milliseconds=None):
+def get_lock(connection, name, timeout_seconds=None, timeout_milliseconds=None,
+        data=None):
     timeout_type, timeout = _get_timeout(timeout_seconds, timeout_milliseconds)
-    request_id, message = _get_lock_script(connection,
-            keys=['last_request_id', name],
-            args=[timeout, timeout_type])
-    if request_id > 0:
-        return str(request_id)
-    else:
-        return
+    success, request_id, owner_id, owner_data = _get_lock_script(connection,
+                    keys=['last_request_id', name],
+                    args=[timeout, timeout_type, simplejson.dumps(data)])
+
+    return (success, str(request_id),
+            str(owner_id), simplejson.loads(owner_data))
 
 _heartbeat_script = Script(lua.load('heartbeat'))
 def heartbeat(connection, name, request_id):

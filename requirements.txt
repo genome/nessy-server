@@ -2,3 +2,4 @@ django
 djangorestframework
 hiredis
 redis
+simplejson

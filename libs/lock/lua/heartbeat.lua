@@ -13,7 +13,7 @@ end
 if actual_secret == secret then
     local timeout = redis.call('GET', lock_key)
     if not timeout then
-        return {-3, 'CRITICAL: Timeout inaccessible'}
+        return {-9, 'CRITICAL: Timeout inaccessible'}
     end
 
     redis.call('EXPIRE', lock_key, timeout)

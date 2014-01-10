@@ -29,19 +29,24 @@ def heartbeat(connection, name, secret):
                 % (secret, name))
 
 
+_release_lock_script = Script(lua.load('release_lock'))
 def release_lock(connection, name, secret):
     if secret is None:
         raise RuntimeError('Must supply a secret')
 
-    actual_secret = connection.get(name)
-    if actual_secret == secret:
-        connection.delete(_timeout_key(name))
-        connection.delete(name)
-
-    else:
+    code, message = _release_lock_script(connection,
+            keys=[name, _timeout_key(name)],
+            args=[secret])
+    if code == 0:
+        return
+    elif code == -1:
         raise RuntimeError(
                 'Incorrect (%s) secret supplied for lock resource "%s".'
                 % (secret, name))
+    elif code == -2:
+        raise RuntimeError('Lock (%s) already expired' % name)
+    else:
+        raise RuntimeError('Unknown error code (%s)' % code)
 
 
 def _timeout_key(name):

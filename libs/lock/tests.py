@@ -17,118 +17,119 @@ class ExclusiveLockNoContentionTest(unittest.TestCase):
             'bar': 'baz'
         }
 
-        (success, request_id, owner_id, owner_data) = lock.request_lock(
-                self.connection, lock_name, timeout_seconds=1, data=data)
-        self.assertTrue(success)
-        self.assertIsNotNone(request_id)
-        self.assertEqual(request_id, owner_id)
-        self.assertEqual(owner_data, data)
+        result = lock.request_lock(self.connection, lock_name,
+                timeout_seconds=1, data=data)
+        self.assertTrue(result.success)
+        self.assertIsNotNone(result.request_id)
+        self.assertEqual(result.request_id, result.owner_id)
+        self.assertEqual(result.owner_data, data)
 
     def test_get_released_lock(self):
         lock_name = 'foo'
 
-        success, request_id, _, _ = lock.request_lock(
-                self.connection, lock_name, timeout_seconds=1)
-        self.assertTrue(success)
-        lock.release_lock(self.connection, lock_name, request_id)
+        result = lock.request_lock(self.connection, lock_name,
+                timeout_seconds=1)
+        self.assertTrue(result.success)
+        lock.release_lock(self.connection, lock_name, result.request_id)
 
-        new_success, new_request_id, _, _ = lock.request_lock(
-                self.connection, lock_name, timeout_seconds=1)
-        self.assertTrue(new_success)
-        self.assertNotEqual(request_id, new_request_id)
-        lock.release_lock(self.connection, lock_name, new_request_id)
+        new_result = lock.request_lock(self.connection, lock_name,
+                timeout_seconds=1)
+        self.assertTrue(new_result.success)
+        self.assertNotEqual(result.request_id, new_result.request_id)
+        lock.release_lock(self.connection, lock_name, new_result.request_id)
 
     def test_release_invalid_request_id(self):
         lock_name = 'foo'
 
-        success, request_id, _, _ = lock.request_lock(
-                self.connection, lock_name, timeout_seconds=1)
-        self.assertTrue(success)
+        result = lock.request_lock(self.connection, lock_name,
+                timeout_seconds=1)
+        self.assertTrue(result.success)
 
-        invalid_request_id = 'INVALID_PREFIX_' + request_id
+        invalid_request_id = 'INVALID_PREFIX_' + result.request_id
         with self.assertRaises(exceptions.RequestIdMismatch):
             lock.release_lock(self.connection, lock_name, invalid_request_id)
 
     def test_release_expired_lock(self):
         lock_name = 'foo'
 
-        success, request_id, _, _ = lock.request_lock(
-                self.connection, lock_name, timeout_milliseconds=10)
-        self.assertTrue(success)
+        result = lock.request_lock(self.connection, lock_name,
+                timeout_milliseconds=10)
+        self.assertTrue(result.success)
 
         time.sleep(0.020)
 
         with self.assertRaises(exceptions.NonExistantLock):
-            lock.release_lock(self.connection, lock_name, request_id)
+            lock.release_lock(self.connection, lock_name, result.request_id)
 
     def test_heartbeat_extends_ttl(self):
         lock_name = 'foo'
 
-        success, request_id, _, _ = lock.request_lock(
-                self.connection, lock_name, timeout_milliseconds=30)
-        self.assertTrue(success)
+        result = lock.request_lock(self.connection, lock_name,
+                timeout_milliseconds=30)
+        self.assertTrue(result.success)
         time.sleep(0.020)
 
-        lock.heartbeat(self.connection, lock_name, request_id)
+        lock.heartbeat(self.connection, lock_name, result.request_id)
         time.sleep(0.020)
-        lock.release_lock(self.connection, lock_name, request_id)
+        lock.release_lock(self.connection, lock_name, result.request_id)
 
 
     def test_get_expired_lock(self):
         lock_name = 'foo'
 
-        success, request_id, _, _ = lock.request_lock(
-                self.connection, lock_name, timeout_milliseconds=10)
-        self.assertTrue(success)
+        result = lock.request_lock(self.connection, lock_name,
+                timeout_milliseconds=10)
+        self.assertTrue(result.success)
 
         time.sleep(0.020)
-        new_success, new_request_id, _, _ = lock.request_lock(
-                self.connection, lock_name, timeout_seconds=1)
-        self.assertTrue(new_success)
-        self.assertNotEqual(request_id, new_request_id)
+        new_result = lock.request_lock(self.connection, lock_name,
+                timeout_seconds=1)
+        self.assertTrue(new_result.success)
+        self.assertNotEqual(result.request_id, new_result.request_id)
 
     def test_heartbeat_valid_lock(self):
         lock_name = 'foo'
 
-        success, request_id, _, _ = lock.request_lock(
-                self.connection, lock_name, timeout_seconds=1)
-        self.assertTrue(success)
-        lock.heartbeat(self.connection, lock_name, request_id)
+        result = lock.request_lock(self.connection, lock_name,
+                timeout_seconds=1)
+        self.assertTrue(result.success)
+        lock.heartbeat(self.connection, lock_name, result.request_id)
 
     def test_heartbeat_invalid_request_id(self):
         lock_name = 'foo'
 
-        success, request_id, _, _ = lock.request_lock(self.connection, lock_name,
+        result = lock.request_lock(self.connection, lock_name,
                 timeout_seconds=1)
-        self.assertTrue(success)
-        invalid_request_id = 'INVALID_PREFIX_' + request_id
+        self.assertTrue(result.success)
+
+        invalid_request_id = 'INVALID_PREFIX_' + result.request_id
         with self.assertRaises(exceptions.RequestIdMismatch):
             lock.heartbeat(self.connection, lock_name, invalid_request_id)
 
     def test_heartbeat_expired_lock(self):
         lock_name = 'foo'
 
-        success, request_id, _, _ = lock.request_lock(
-                self.connection, lock_name, timeout_milliseconds=10)
-        self.assertTrue(success)
+        result = lock.request_lock(self.connection, lock_name,
+                timeout_milliseconds=10)
+        self.assertTrue(result.success)
         time.sleep(0.020)
         with self.assertRaises(exceptions.NonExistantLock):
-            lock.heartbeat(self.connection, lock_name, request_id)
+            lock.heartbeat(self.connection, lock_name, result.request_id)
 
     def test_get_two_locks(self):
         lock_name_a = 'foo'
         lock_name_b = 'bar'
 
-        suc_a, request_id_a, _, _ = lock.request_lock(self.connection, lock_name_a,
+        result_a = lock.request_lock(self.connection, lock_name_a,
                 timeout_seconds=1)
-        self.assertTrue(suc_a)
+        self.assertTrue(result_a.success)
 
-        suc_b, request_id_b, _, _ = lock.request_lock(self.connection, lock_name_b,
+        result_b = lock.request_lock(self.connection, lock_name_b,
                 timeout_seconds=1)
-        self.assertTrue(suc_b)
+        self.assertTrue(result_b.success)
 
-        lock.release_lock(self.connection, lock_name_a, request_id_a)
-        lock.release_lock(self.connection, lock_name_b, request_id_b)
+        lock.release_lock(self.connection, lock_name_a, result_a.request_id)
+        lock.release_lock(self.connection, lock_name_b, result_b.request_id)
 
 
 class ExclusiveLockContentionTest(unittest.TestCase):
@@ -142,15 +143,15 @@ class ExclusiveLockContentionTest(unittest.TestCase):
             'bar': 'baz'
         }
 
-        (success, original_request_id, _, _) = lock.request_lock(
+        result = lock.request_lock(
                 self.connection, lock_name, timeout_seconds=1, data=data)
-        self.assertTrue(success)
+        self.assertTrue(result.success)
 
-        (new_success, request_id, owner_id, owner_data) = lock.request_lock(
+        new_result = lock.request_lock(
                 self.connection, lock_name, timeout_seconds=1)
-        self.assertFalse(new_success)
-        self.assertEqual(original_request_id, owner_id)
-        self.assertEqual(data, owner_data)
+        self.assertFalse(new_result.success)
+        self.assertEqual(result.request_id, new_result.owner_id)
+        self.assertEqual(data, new_result.owner_data)
 
 
 if __name__ == '__main__':

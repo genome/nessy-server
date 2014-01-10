@@ -7,6 +7,14 @@ import simplejson
 __all__ = ['request_lock', 'heartbeat', 'release_lock']
 
 
+class RequestResult(object):
+    def __init__(self, lock_name, success, request_id, owner_id, owner_data):
+        self.lock_name = lock_name
+        self.success = success
+        self.request_id = request_id
+        self.owner_id = owner_id
+        self.owner_data = owner_data
+
 _request_lock_script = Script(lua.load('get_lock'))
 def request_lock(connection, name, timeout_seconds=None, timeout_milliseconds=None,
         data=None):
@@ -15,7 +23,7 @@ def request_lock(connection, name, timeout_seconds=None, timeout_milliseconds=No
                     keys=['last_request_id', name],
                     args=[timeout, timeout_type, simplejson.dumps(data)])
 
-    return (success, str(request_id),
+    return RequestResult(name, success, str(request_id),
             str(owner_id), simplejson.loads(owner_data))
 
 _heartbeat_script = Script(lua.load('heartbeat'))

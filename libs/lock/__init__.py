@@ -29,7 +29,7 @@ def heartbeat(connection, name, secret):
                 'Incorrect (%s) secret supplied for lock resource "%s".'
                 % (secret, name))
     elif code == -2:
-        raise RuntimeError('Lock (%s) already expired' % name)
+        raise RuntimeError('Lock (%s) does not exist' % name)
     elif code == -3:
         raise RuntimeError('CRITICAL: timeout key inaccessible for lock (%s)'
                 % name)
@@ -52,7 +52,7 @@ def release_lock(connection, name, secret):
                 'Incorrect (%s) secret supplied for lock resource "%s".'
                 % (secret, name))
     elif code == -2:
-        raise RuntimeError('Lock (%s) already expired' % name)
+        raise RuntimeError('Lock (%s) does not exist' % name)
     else:
         raise RuntimeError('Unknown error code (%s)' % code)
 

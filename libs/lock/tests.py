@@ -43,6 +43,18 @@ class ExclusiveLockNoContentionTest(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             lock.release_lock(self.connection, lock_name, secret)
 
+    def test_heartbeat_extends_ttl(self):
+        lock_name = 'foo'
+
+        secret = lock.get_lock(self.connection, lock_name, timeout=3)
+        self.assertIsNotNone(secret)
+        time.sleep(2)
+
+        lock.heartbeat(self.connection, lock_name, secret)
+        time.sleep(2)
+        lock.release_lock(self.connection, lock_name, secret)
+
+
     def test_get_expired_lock(self):
         lock_name = 'foo'
 

@@ -1,11 +1,11 @@
-local last_lock_num_key = KEYS[1]
+local last_request_id = KEYS[1]
 local lock_key = KEYS[2]
 
 local timeout = ARGV[1]
 local timeout_type = ARGV[2]
 local data = ARGV[3]
 
-local request_id = redis.call('INCR', last_lock_num_key)
+local request_id = redis.call('INCR', last_request_id)
 
 if redis.call('EXISTS', lock_key) ~= 0 then
     local owner_id = redis.call('HGET', lock_key, 'request_id')

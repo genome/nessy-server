@@ -20,6 +20,13 @@ class RequestResult(object):
         self.owner_id = owner_id
         self.owner_data = owner_data
 
+    def __repr__(self):
+        return '%s(%s, %s, %s, %s, %s)' % (
+            self.__class__.__name__,
+            self.lock_name, self.success, self.request_id, self.owner_id,
+            self.owner_data
+        )
+
 _request_lock_script = Script(lua.load('queue', 'request_lock'))
 def request_lock(connection, name, timeout_seconds=None,
         timeout_milliseconds=None, data=None):

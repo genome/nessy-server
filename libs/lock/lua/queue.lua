@@ -1,11 +1,37 @@
 local queue_max_timeout = function(lock_queue_timeout_types,
         lock_queue_timeouts)
-    return nil
+    local max_expire = 0
+    local max_pexpire = 0
+
+    for i, request_id in pairs(redis.call('HKEYS', lock_queue_timeout_types)) do
+        local timeout_type = redis.call('HGET', lock_queue_timeout_types,
+            request_id)
+        local timeout = redis.call('HGET', lock_queue_timeouts, request_id)
+        if timeout_type == 'EXPIRE' then
+            max_expire = math.max(max_expire, timeout)
+        else
+            max_pexpire = math.max(max_pexpire, timeout)
+        end
+    end
+
+    if max_expire * 1000 > max_pexpire then
+        return 'EXPIRE', max_expire
+    else
+        return 'PEXPIRE', max_pexpire
+    end
 end
 
 local queue_update_timeout = function(lock_queue,
         lock_queue_timeout_types, lock_queue_timeouts,
         lock_queue_data)
+    local timeout_type, timeout = queue_max_timeout(lock_queue_timeout_types,
+        lock_queue_timeouts)
+
+    redis.call(timeout_type, lock_queue, timeout)
+    redis.call(timeout_type, lock_queue_timeout_types, timeout)
+    redis.call(timeout_type, lock_queue_timeouts, timeout)
+    redis.call(timeout_type, lock_queue_data, timeout)
+
     return
 end
 

@@ -171,6 +171,7 @@ class ExclusiveLockContentionTest(unittest.TestCase):
         retry_result = lock.retry_request(self.connection,
                 lock_name, new_result.request_id)
         self.assertFalse(retry_result.success)
+        self.assertEqual(retry_result.owner_id, result.request_id)
 
     def test_retry_expired_lock_succeeds(self):
         lock_name = 'foo'
@@ -187,6 +188,52 @@ class ExclusiveLockContentionTest(unittest.TestCase):
         retry_result = lock.retry_request(self.connection,
                 lock_name, new_result.request_id)
         self.assertTrue(retry_result.success)
+        self.assertEqual(new_result.request_id, retry_result.owner_id)
+
+    def test_retry_released_lock_succeeds(self):
+        lock_name = 'foo'
+        result = lock.request_lock(self.connection, lock_name,
+                timeout_seconds=1)
+        self.assertTrue(result.success)
+
+        new_result = lock.request_lock(self.connection, lock_name,
+                timeout_seconds=1)
+        self.assertFalse(new_result.success)
+
+        lock.release_lock(self.connection, lock_name, result.request_id)
+
+        retry_result = lock.retry_request(self.connection,
+                lock_name, new_result.request_id)
+        self.assertTrue(retry_result.success)
+
+    def test_priority_when_lock_released(self):
+        lock_name = 'foo'
+        first_result = lock.request_lock(self.connection, lock_name,
+                timeout_seconds=1)
+
+        second_result = lock.request_lock(self.connection, lock_name,
+                timeout_seconds=1)
+        self.assertFalse(second_result.success)
+
+        lock.release_lock(self.connection, lock_name, first_result.request_id)
+        third_result = lock.request_lock(self.connection, lock_name,
+                timeout_seconds=1)
+        self.assertFalse(third_result.success)
+
+    def test_queue_expires(self):
+        lock_name = 'foo'
+        first_result = lock.request_lock(self.connection, lock_name,
+                timeout_seconds=1)
+        expiring_result = lock.request_lock(self.connection, lock_name,
+                timeout_milliseconds=10)
+
+        time.sleep(0.020)
+
+        lock.release_lock(self.connection, lock_name, first_result.request_id)
+
+        second_result = lock.request_lock(self.connection, lock_name,
+                timeout_seconds=1)
+        self.assertTrue(second_result.success)
 
 
 if __name__ == '__main__':

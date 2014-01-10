@@ -183,7 +183,7 @@ class ExclusiveLockContentionTest(unittest.TestCase):
                 timeout_seconds=1)
         self.assertFalse(new_result.success)
 
-        time.sleep(0.010)
+        time.sleep(0.015)
 
         retry_result = lock.retry_request(self.connection,
                 lock_name, new_result.request_id)

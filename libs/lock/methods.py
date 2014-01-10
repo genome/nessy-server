@@ -13,9 +13,16 @@ def get_lock(connection, name, timeout_seconds=None, timeout_milliseconds=None):
     elif timeout_seconds is None and timeout_milliseconds is None:
         raise exceptions.NoTimeout(name)
 
+    if timeout_milliseconds is not None:
+        timeout = timeout_milliseconds
+        timeout_type = 'PEXPIRE'
+    else:
+        timeout = timeout_seconds
+        timeout_type = 'EXPIRE'
+
     request_id, message = _get_lock_script(connection,
-            keys=['last_request_id', name, _timeout_key(name)],
-            args=[timeout_seconds])
+            keys=['last_request_id', name],
+            args=[timeout, timeout_type])
     if request_id > 0:
         return str(request_id)
     else:
@@ -28,8 +35,7 @@ def heartbeat(connection, name, request_id):
         raise exceptions.NoRequestId(name)
 
     code, message = _heartbeat_script(connection,
-            keys=[name, _timeout_key(name)],
-            args=[request_id])
+            keys=[name], args=[request_id])
 
     exceptions.raise_storage_exception(code, name, request_id)
     return
@@ -41,12 +47,7 @@ def release_lock(connection, name, request_id):
         raise exceptions.NoRequestId(name)
 
     code, message = _release_lock_script(connection,
-            keys=[name, _timeout_key(name)],
-            args=[request_id])
+            keys=[name], args=[request_id])
 
     exceptions.raise_storage_exception(code, name, request_id)
     return
-
-
-def _timeout_key(name):
-    return name + '/timeout'

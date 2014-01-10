@@ -40,10 +40,10 @@ class ExclusiveLockNoContentionTest(unittest.TestCase):
         lock_name = 'foo'
 
         request_id = lock.get_lock(self.connection, lock_name,
-                timeout_seconds=1)
+                timeout_milliseconds=10)
         self.assertIsNotNone(request_id)
 
-        time.sleep(2)
+        time.sleep(0.020)
 
         with self.assertRaises(exceptions.NonExistantLock):
             lock.release_lock(self.connection, lock_name, request_id)
@@ -52,12 +52,12 @@ class ExclusiveLockNoContentionTest(unittest.TestCase):
         lock_name = 'foo'
 
         request_id = lock.get_lock(self.connection, lock_name,
-                timeout_seconds=3)
+                timeout_milliseconds=30)
         self.assertIsNotNone(request_id)
-        time.sleep(2)
+        time.sleep(0.020)
 
         lock.heartbeat(self.connection, lock_name, request_id)
-        time.sleep(2)
+        time.sleep(0.020)
         lock.release_lock(self.connection, lock_name, request_id)
 
 
@@ -65,10 +65,10 @@ class ExclusiveLockNoContentionTest(unittest.TestCase):
         lock_name = 'foo'
 
         request_id = lock.get_lock(self.connection, lock_name,
-                timeout_seconds=1)
+                timeout_milliseconds=10)
         self.assertIsNotNone(request_id)
 
-        time.sleep(2)
+        time.sleep(0.020)
         new_request_id = lock.get_lock(self.connection, lock_name,
                 timeout_seconds=1)
         self.assertIsNotNone(new_request_id)
@@ -97,9 +97,9 @@ class ExclusiveLockNoContentionTest(unittest.TestCase):
         lock_name = 'foo'
 
         request_id = lock.get_lock(self.connection, lock_name,
-                timeout_seconds=1)
+                timeout_milliseconds=10)
         self.assertIsNotNone(request_id)
-        time.sleep(2)
+        time.sleep(0.020)
         with self.assertRaises(exceptions.NonExistantLock):
             lock.heartbeat(self.connection, lock_name, request_id)
 

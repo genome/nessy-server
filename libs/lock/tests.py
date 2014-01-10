@@ -153,5 +153,41 @@ class ExclusiveLockNoContentionTest(unittest.TestCase):
         lock.release_lock(self.connection, lock_name_b, result_b.request_id)
 
 
+class ExclusiveLockContentionTest(unittest.TestCase):
+    def setUp(self):
+        self.connection = redis.Redis()
+        self.connection.flushall()
+
+    def test_retry_existing_lock_fails(self):
+        lock_name = 'foo'
+        result = lock.request_lock(self.connection, lock_name,
+                timeout_seconds=1)
+        self.assertTrue(result.success)
+
+        new_result = lock.request_lock(self.connection, lock_name,
+                timeout_seconds=1)
+        self.assertFalse(new_result.success)
+
+        retry_result = lock.retry_request(self.connection,
+                lock_name, new_result.request_id)
+        self.assertFalse(retry_result.success)
+
+    def test_retry_expired_lock_succeeds(self):
+        lock_name = 'foo'
+        result = lock.request_lock(self.connection, lock_name,
+                timeout_milliseconds=10)
+        self.assertTrue(result.success)
+
+        new_result = lock.request_lock(self.connection, lock_name,
+                timeout_seconds=1)
+        self.assertFalse(new_result.success)
+
+        time.sleep(0.010)
+
+        retry_result = lock.retry_request(self.connection,
+                lock_name, new_result.request_id)
+        self.assertTrue(retry_result.success)
+
+
 if __name__ == '__main__':
     unittest.main()

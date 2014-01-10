@@ -119,11 +119,5 @@ class ExclusiveLockNoContentionTest(unittest.TestCase):
         lock.release_lock(self.connection, lock_name_b, request_id_b)
 
 
-#class ExclusiveLockContentionTest(unittest.TestCase):
-#    def setUp(self):
-#        self.connection = redis.Redis()
-#        self.connection.flushall()
-
-
 if __name__ == '__main__':
     unittest.main()

@@ -1,9 +1,19 @@
 class LockingException(Exception):
-    def __init__(self, **kwargs):
-        Exception.__init__(self, self.TEMPLATE.format(**kwargs))
+    def __init__(self, *args, **kwargs):
+        Exception.__init__(self, self.TEMPLATE.format(*args, **kwargs))
 
-class NoRequestId(LockingException):
-    TEMPLATE = 'No request_id supplied:  name = "{name}"'
+class InvalidParameters(LockingException): pass
+
+class MultipleTimeouts(InvalidParameters):
+    TEMPLATE = 'Specified both timeout_seconds ({timeout_seconds}) '\
+            'and timeout_milliseconds ({timeout_milliseconds})'\
+            'for lock "{name}"'
+
+class NoTimeout(InvalidParameters):
+    TEMPLATE = 'No timeout specified for lock "{}"'
+
+class NoRequestId(InvalidParameters):
+    TEMPLATE = 'No request_id supplied for lock "{}"'
 
 class RequestIdMismatch(LockingException):
     TEMPLATE = 'Mismatched request_id ({request_id}) supplied for '\

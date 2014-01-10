@@ -3,6 +3,7 @@ import time
 import unittest
 
 from libs import lock
+from libs.lock import exceptions
 
 
 class ExclusiveLockNoContentionTest(unittest.TestCase):
@@ -29,7 +30,7 @@ class ExclusiveLockNoContentionTest(unittest.TestCase):
         self.assertIsNotNone(request_id)
 
         invalid_request_id = 'INVALID_PREFIX_' + request_id
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(exceptions.RequestIdMismatch):
             lock.release_lock(self.connection, lock_name, invalid_request_id)
 
     def test_release_expired_lock(self):
@@ -80,7 +81,7 @@ class ExclusiveLockNoContentionTest(unittest.TestCase):
         request_id = lock.get_lock(self.connection, lock_name)
         self.assertIsNotNone(request_id)
         invalid_request_id = 'INVALID_PREFIX_' + request_id
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(exceptions.RequestIdMismatch):
             lock.heartbeat(self.connection, lock_name, invalid_request_id)
 
     def test_heartbeat_expired_lock(self):

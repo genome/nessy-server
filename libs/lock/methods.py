@@ -1,3 +1,4 @@
+from libs.lock import exceptions
 from libs.lock import lua
 from libs.lock.script import Script
 
@@ -27,9 +28,7 @@ def heartbeat(connection, name, request_id):
     if code == 0:
         return
     elif code == -1:
-        raise RuntimeError(
-                'Mismatched request_id (%s) supplied for lock resource "%s".'
-                % (request_id, name))
+        raise exceptions.RequestIdMismatch(name, request_id)
     elif code == -2:
         raise RuntimeError('Lock (%s) does not exist' % name)
     else:
@@ -47,9 +46,7 @@ def release_lock(connection, name, request_id):
     if code == 0:
         return
     elif code == -1:
-        raise RuntimeError(
-                'Mismatched request_id (%s) supplied for lock resource "%s".'
-                % (request_id, name))
+        raise exceptions.RequestIdMismatch(name, request_id)
     elif code == -2:
         raise RuntimeError('Lock (%s) does not exist' % name)
     else:

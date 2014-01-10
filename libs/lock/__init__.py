@@ -13,20 +13,28 @@ def get_lock(connection, name, exclusive=True, timeout=600):
         return
 
 
+_heartbeat_script = Script(lua.load('heartbeat'))
 def heartbeat(connection, name, secret):
     if secret is None:
         raise RuntimeError('Must supply a secret')
 
-    actual_secret = connection.get(name)
-    if actual_secret == secret:
-        ttl = connection.get(_timeout_key(name))
-        connection.expire(name, ttl)
-        connection.expire(_timeout_key(name), ttl)
+    code, message = _heartbeat_script(connection,
+            keys=[name, _timeout_key(name)],
+            args=[secret])
 
-    else:
+    if code == 0:
+        return
+    elif code == -1:
         raise RuntimeError(
                 'Incorrect (%s) secret supplied for lock resource "%s".'
                 % (secret, name))
+    elif code == -2:
+        raise RuntimeError('Lock (%s) already expired' % name)
+    elif code == -3:
+        raise RuntimeError('CRITICAL: timeout key inaccessible for lock (%s)'
+                % name)
+    else:
+        raise RuntimeError('Unknown error code (%s)' % code)
 
 
 _release_lock_script = Script(lua.load('release_lock'))

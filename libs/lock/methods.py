@@ -4,14 +4,14 @@ from libs.lock.script import Script
 
 import simplejson
 
-__all__ = ['get_lock', 'heartbeat', 'release_lock']
+__all__ = ['request_lock', 'heartbeat', 'release_lock']
 
 
-_get_lock_script = Script(lua.load('get_lock'))
-def get_lock(connection, name, timeout_seconds=None, timeout_milliseconds=None,
+_request_lock_script = Script(lua.load('get_lock'))
+def request_lock(connection, name, timeout_seconds=None, timeout_milliseconds=None,
         data=None):
     timeout_type, timeout = _get_timeout(timeout_seconds, timeout_milliseconds)
-    success, request_id, owner_id, owner_data = _get_lock_script(connection,
+    success, request_id, owner_id, owner_data = _request_lock_script(connection,
                     keys=['last_request_id', name],
                     args=[timeout, timeout_type, simplejson.dumps(data)])
 

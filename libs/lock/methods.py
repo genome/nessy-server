@@ -19,38 +19,27 @@ def get_lock(connection, name, exclusive=True, timeout=600):
 _heartbeat_script = Script(lua.load('heartbeat'))
 def heartbeat(connection, name, request_id):
     if request_id is None:
-        raise RuntimeError('Must supply a request_id')
+        raise exceptions.NoRequestId(name)
 
     code, message = _heartbeat_script(connection,
             keys=[name, _timeout_key(name)],
             args=[request_id])
 
-    if code == 0:
-        return
-    elif code == -1:
-        raise exceptions.RequestIdMismatch(name, request_id)
-    elif code == -2:
-        raise RuntimeError('Lock (%s) does not exist' % name)
-    else:
-        raise RuntimeError('Unknown error code (%s): %s' % (code, message))
+    exceptions.raise_storage_exception(code, name, request_id)
+    return
 
 
 _release_lock_script = Script(lua.load('release_lock'))
 def release_lock(connection, name, request_id):
     if request_id is None:
-        raise RuntimeError('Must supply a request_id')
+        raise exceptions.NoRequestId(name)
 
     code, message = _release_lock_script(connection,
             keys=[name, _timeout_key(name)],
             args=[request_id])
-    if code == 0:
-        return
-    elif code == -1:
-        raise exceptions.RequestIdMismatch(name, request_id)
-    elif code == -2:
-        raise RuntimeError('Lock (%s) does not exist' % name)
-    else:
-        raise RuntimeError('Unknown error code (%s): %s' % (code, message))
+
+    exceptions.raise_storage_exception(code, name, request_id)
+    return
 
 
 def _timeout_key(name):

@@ -41,7 +41,7 @@ class ExclusiveLockNoContentionTest(unittest.TestCase):
 
         time.sleep(2)
 
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(exceptions.NonExistantLock):
             lock.release_lock(self.connection, lock_name, request_id)
 
     def test_heartbeat_extends_ttl(self):
@@ -90,7 +90,7 @@ class ExclusiveLockNoContentionTest(unittest.TestCase):
         request_id = lock.get_lock(self.connection, lock_name, timeout=1)
         self.assertIsNotNone(request_id)
         time.sleep(2)
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(exceptions.NonExistantLock):
             lock.heartbeat(self.connection, lock_name, request_id)
 
     def test_get_two_locks(self):

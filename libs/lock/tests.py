@@ -10,7 +10,7 @@ class LockDataTest(unittest.TestCase):
         self.connection = redis.Redis()
         self.connection.flushall()
 
-    def test_get_sets_owner_data(self):
+    def test_request_sets_owner_data(self):
         lock_name = 'foo'
         data = {
             'bar': 'baz'
@@ -23,7 +23,7 @@ class LockDataTest(unittest.TestCase):
         self.assertEqual(result.request_id, result.owner_id)
         self.assertEqual(result.owner_data, data)
 
-    def test_get_returns_owner_data(self):
+    def test_request_returns_owner_data(self):
         lock_name = 'foo'
         data = {
             'bar': 'baz'
@@ -45,7 +45,7 @@ class ExclusiveLockNoContentionTest(unittest.TestCase):
         self.connection = redis.Redis()
         self.connection.flushall()
 
-    def test_get_released_lock(self):
+    def test_request_released_lock(self):
         lock_name = 'foo'
 
         result = lock.request_lock(self.connection, lock_name,
@@ -95,7 +95,7 @@ class ExclusiveLockNoContentionTest(unittest.TestCase):
         lock.release_lock(self.connection, lock_name, result.request_id)
 
 
-    def test_get_expired_lock(self):
+    def test_request_expired_lock(self):
         lock_name = 'foo'
 
         result = lock.request_lock(self.connection, lock_name,
@@ -137,7 +137,7 @@ class ExclusiveLockNoContentionTest(unittest.TestCase):
         with self.assertRaises(exceptions.NonExistantLock):
             lock.heartbeat(self.connection, lock_name, result.request_id)
 
-    def test_get_two_locks(self):
+    def test_request_two_locks(self):
         lock_name_a = 'foo'
         lock_name_b = 'bar'
 

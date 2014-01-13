@@ -34,7 +34,7 @@ _STORAGE_CODE_MAP = {
     -1: RequestIdMismatch,
     -2: NonExistantLock,
 }
-def raise_storage_exception(code, name, request_id):
+def raise_from_error_code(code, name, request_id):
     if code != 0:
         cls = _STORAGE_CODE_MAP.get(code, UnknownError)
         raise cls(code=code, name=name, request_id=request_id)

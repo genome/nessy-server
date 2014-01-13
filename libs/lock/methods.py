@@ -48,7 +48,7 @@ def retry_request(connection, name, request_id):
     code, success, owner_id, owner_data = _retry_lock_script(connection,
             keys=[name] + _queue_keys(name),
             args=[request_id])
-    exceptions.raise_storage_exception(code, name, request_id)
+    exceptions.raise_from_error_code(code, name, request_id)
     return RequestResult(name, success, request_id,
             str(owner_id), simplejson.dumps(owner_data))
 
@@ -72,7 +72,7 @@ def heartbeat(connection, name, request_id):
     code, message = _heartbeat_script(connection,
             keys=[name], args=[request_id])
 
-    exceptions.raise_storage_exception(code, name, request_id)
+    exceptions.raise_from_error_code(code, name, request_id)
     return
 
 _release_lock_script = Script(lua.load('release_lock'))
@@ -83,7 +83,7 @@ def release_lock(connection, name, request_id):
     code, message = _release_lock_script(connection,
             keys=[name], args=[request_id])
 
-    exceptions.raise_storage_exception(code, name, request_id)
+    exceptions.raise_from_error_code(code, name, request_id)
     return
 
 

@@ -43,13 +43,35 @@ class LockDataTest(RedisTest):
         self.assertEqual(data, new_result.owner_data)
 
 
-class ExclusiveLockNoContentionTest(RedisTest):
-    def test_empty_lock_name_fails(self):
+class ExclusiveLockNoLockNameTest(RedisTest):
+    def test_request_with_empty_lock_name_fails(self):
         lock_name = ''
         with self.assertRaises(exceptions.NoLockName):
             lock.request_lock(self.connection, lock_name,
                     timeout_seconds=1)
 
+    def test_retry_with_empty_lock_name_fails(self):
+        lock_name = ''
+        with self.assertRaises(exceptions.NoLockName):
+            lock.retry_request(self.connection, lock_name, request_id=1)
+
+    def test_try_lock_with_empty_lock_name_fails(self):
+        lock_name = ''
+        with self.assertRaises(exceptions.NoLockName):
+            lock.try_lock(self.connection, lock_name, timeout_seconds=1)
+
+    def test_heartbeat_with_empty_lock_name_fails(self):
+        lock_name = ''
+        with self.assertRaises(exceptions.NoLockName):
+            lock.heartbeat(self.connection, lock_name, request_id=1)
+
+    def test_release_with_empty_lock_name_fails(self):
+        lock_name = ''
+        with self.assertRaises(exceptions.NoLockName):
+            lock.release_lock(self.connection, lock_name, request_id=1)
+
+
+class ExclusiveLockNoContentionTest(RedisTest):
     def test_request_released_lock_succeeds(self):
         lock_name = 'foo'
 

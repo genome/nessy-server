@@ -45,6 +45,9 @@ def request_lock(connection, name, timeout_seconds=None,
 
 _retry_lock_script = Script(lua.load('queue', 'retry_lock'))
 def retry_request(connection, name, request_id):
+    if not name:
+        raise exceptions.NoLockName()
+
     code, success, owner_id, owner_data = _retry_lock_script(connection,
             keys=[name] + _queue_keys(name),
             args=[request_id])
@@ -55,6 +58,9 @@ def retry_request(connection, name, request_id):
 _try_lock_script = Script(lua.load('queue', 'retry_lock'))
 def try_lock(connection, name, timeout_seconds=None,
         timeout_milliseconds=None, data=None):
+    if not name:
+        raise exceptions.NoLockName()
+
     timeout_type, timeout = _get_timeout(timeout_seconds, timeout_milliseconds)
     success, request_id, owner_id, owner_data = _try_lock_script(connection,
                     keys=['last_request_id', name] + _queue_keys(name),
@@ -66,6 +72,9 @@ def try_lock(connection, name, timeout_seconds=None,
 
 _heartbeat_script = Script(lua.load('heartbeat'))
 def heartbeat(connection, name, request_id):
+    if not name:
+        raise exceptions.NoLockName()
+
     if request_id is None:
         raise exceptions.NoRequestId(name)
 
@@ -77,6 +86,9 @@ def heartbeat(connection, name, request_id):
 
 _release_lock_script = Script(lua.load('release_lock'))
 def release_lock(connection, name, request_id):
+    if not name:
+        raise exceptions.NoLockName()
+
     if request_id is None:
         raise exceptions.NoRequestId(name)
 

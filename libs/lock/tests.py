@@ -5,11 +5,14 @@ import unittest
 from libs import lock
 from libs.lock import exceptions
 
-class LockDataTest(unittest.TestCase):
+
+class RedisTest(unittest.TestCase):
     def setUp(self):
         self.connection = redis.Redis()
         self.connection.flushall()
 
+
+class LockDataTest(RedisTest):
     def test_request_sets_owner_data(self):
         lock_name = 'foo'
         data = {
@@ -40,11 +43,7 @@ class LockDataTest(unittest.TestCase):
         self.assertEqual(data, new_result.owner_data)
 
 
-class ExclusiveLockNoContentionTest(unittest.TestCase):
-    def setUp(self):
-        self.connection = redis.Redis()
-        self.connection.flushall()
-
+class ExclusiveLockNoContentionTest(RedisTest):
     def test_request_released_lock(self):
         lock_name = 'foo'
 
@@ -153,11 +152,7 @@ class ExclusiveLockNoContentionTest(unittest.TestCase):
         lock.release_lock(self.connection, lock_name_b, result_b.request_id)
 
 
-class ExclusiveLockContentionTest(unittest.TestCase):
-    def setUp(self):
-        self.connection = redis.Redis()
-        self.connection.flushall()
-
+class ExclusiveLockContentionTest(RedisTest):
     def test_retry_existing_lock_fails(self):
         lock_name = 'foo'
         result = lock.request_lock(self.connection, lock_name,
@@ -205,6 +200,21 @@ class ExclusiveLockContentionTest(unittest.TestCase):
         retry_result = lock.retry_request(self.connection,
                 lock_name, new_result.request_id)
         self.assertTrue(retry_result.success)
+
+    def test_retry_invalid_request_id(self):
+        lock_name = 'foo'
+        result = lock.request_lock(self.connection, lock_name,
+                timeout_seconds=1)
+        self.assertTrue(result.success)
+
+        new_result = lock.request_lock(self.connection, lock_name,
+                timeout_seconds=1)
+        self.assertFalse(new_result.success)
+
+        invalid_request_id = 'INVALID_PREFIX_' + new_result.request_id
+        with self.assertRaises(exceptions.RequestIdMismatch):
+            res = lock.retry_request(self.connection, lock_name,
+                    invalid_request_id)
 
     def test_priority_when_lock_released(self):
         lock_name = 'foo'

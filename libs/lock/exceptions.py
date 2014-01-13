@@ -4,6 +4,9 @@ class LockingException(Exception):
 
 class InvalidParameters(LockingException): pass
 
+class NoLockName(InvalidParameters):
+    TEMPLATE = 'No lock name provided'
+
 class MultipleTimeouts(InvalidParameters):
     TEMPLATE = 'Specified both timeout_seconds ({timeout_seconds}) '\
             'and timeout_milliseconds ({timeout_milliseconds})'\

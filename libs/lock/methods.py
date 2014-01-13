@@ -32,6 +32,9 @@ class RequestResult(object):
 _request_lock_script = Script(lua.load('queue', 'request_lock'))
 def request_lock(connection, name, timeout_seconds=None,
         timeout_milliseconds=None, data=None):
+    if not name:
+        raise exceptions.NoLockName()
+
     timeout_type, timeout = _get_timeout(timeout_seconds, timeout_milliseconds)
     success, request_id, owner_id, owner_data = _request_lock_script(connection,
                     keys=['last_request_id', name] + _queue_keys(name),

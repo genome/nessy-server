@@ -44,6 +44,12 @@ class LockDataTest(RedisTest):
 
 
 class ExclusiveLockNoContentionTest(RedisTest):
+    def test_empty_lock_name_should_fail(self):
+        lock_name = ''
+        with self.assertRaises(exceptions.NoLockName):
+            lock.request_lock(self.connection, lock_name,
+                    timeout_seconds=1)
+
     def test_request_released_lock(self):
         lock_name = 'foo'
 

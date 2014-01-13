@@ -44,13 +44,13 @@ class LockDataTest(RedisTest):
 
 
 class ExclusiveLockNoContentionTest(RedisTest):
-    def test_empty_lock_name_should_fail(self):
+    def test_empty_lock_name_fails(self):
         lock_name = ''
         with self.assertRaises(exceptions.NoLockName):
             lock.request_lock(self.connection, lock_name,
                     timeout_seconds=1)
 
-    def test_request_released_lock(self):
+    def test_request_released_lock_succeeds(self):
         lock_name = 'foo'
 
         result = lock.request_lock(self.connection, lock_name,
@@ -64,7 +64,7 @@ class ExclusiveLockNoContentionTest(RedisTest):
         self.assertNotEqual(result.request_id, new_result.request_id)
         lock.release_lock(self.connection, lock_name, new_result.request_id)
 
-    def test_release_invalid_request_id(self):
+    def test_release_invalid_request_id_fails(self):
         lock_name = 'foo'
 
         result = lock.request_lock(self.connection, lock_name,
@@ -75,7 +75,7 @@ class ExclusiveLockNoContentionTest(RedisTest):
         with self.assertRaises(exceptions.RequestIdMismatch):
             lock.release_lock(self.connection, lock_name, invalid_request_id)
 
-    def test_release_expired_lock(self):
+    def test_release_expired_lock_fails(self):
         lock_name = 'foo'
 
         result = lock.request_lock(self.connection, lock_name,
@@ -99,8 +99,7 @@ class ExclusiveLockNoContentionTest(RedisTest):
         time.sleep(0.020)
         lock.release_lock(self.connection, lock_name, result.request_id)
 
-
-    def test_request_expired_lock(self):
+    def test_request_expired_lock_succeeds(self):
         lock_name = 'foo'
 
         result = lock.request_lock(self.connection, lock_name,
@@ -113,7 +112,7 @@ class ExclusiveLockNoContentionTest(RedisTest):
         self.assertTrue(new_result.success)
         self.assertNotEqual(result.request_id, new_result.request_id)
 
-    def test_heartbeat_valid_lock(self):
+    def test_heartbeat_valid_lock_succeeds(self):
         lock_name = 'foo'
 
         result = lock.request_lock(self.connection, lock_name,
@@ -121,7 +120,7 @@ class ExclusiveLockNoContentionTest(RedisTest):
         self.assertTrue(result.success)
         lock.heartbeat(self.connection, lock_name, result.request_id)
 
-    def test_heartbeat_invalid_request_id(self):
+    def test_heartbeat_invalid_request_id_fails(self):
         lock_name = 'foo'
 
         result = lock.request_lock(self.connection, lock_name,
@@ -132,7 +131,7 @@ class ExclusiveLockNoContentionTest(RedisTest):
         with self.assertRaises(exceptions.RequestIdMismatch):
             lock.heartbeat(self.connection, lock_name, invalid_request_id)
 
-    def test_heartbeat_expired_lock(self):
+    def test_heartbeat_expired_lock_fails(self):
         lock_name = 'foo'
 
         result = lock.request_lock(self.connection, lock_name,
@@ -142,7 +141,7 @@ class ExclusiveLockNoContentionTest(RedisTest):
         with self.assertRaises(exceptions.NonExistantLock):
             lock.heartbeat(self.connection, lock_name, result.request_id)
 
-    def test_request_two_locks(self):
+    def test_request_two_locks_succeeds(self):
         lock_name_a = 'foo'
         lock_name_b = 'bar'
 
@@ -207,7 +206,7 @@ class ExclusiveLockContentionTest(RedisTest):
                 lock_name, new_result.request_id)
         self.assertTrue(retry_result.success)
 
-    def test_retry_invalid_request_id(self):
+    def test_retry_invalid_request_id_fails(self):
         lock_name = 'foo'
         result = lock.request_lock(self.connection, lock_name,
                 timeout_seconds=1)
@@ -222,7 +221,7 @@ class ExclusiveLockContentionTest(RedisTest):
             res = lock.retry_request(self.connection, lock_name,
                     invalid_request_id)
 
-    def test_priority_when_lock_released(self):
+    def test_priority_maintained_when_lock_released(self):
         lock_name = 'foo'
         first_result = lock.request_lock(self.connection, lock_name,
                 timeout_seconds=1)

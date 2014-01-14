@@ -1,5 +1,6 @@
 django
 djangorestframework
+django-redis
 hiredis
 redis
 simplejson

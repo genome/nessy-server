@@ -5,11 +5,19 @@ Returns a list of resources (useful for maintenance).
 
 # /v1/resources/(resource-name)/
 ## GET
-Returns lock data:
-- owner request id (url to owner's request)
-- owner data
-- time until expiration
-- queued locks (urls)
+Sample data:
+
+    {
+        "url": "https://api.lock.gsc.wustl.edu/v1/resources/asdf/",
+        "owner": {
+            "url": "https://api.lock.gsc.wustl.edu/v1/locks/45/",
+            "active_time": 1234
+        },
+        "queue": [
+            "url": "https://api.lock.gsc.wustl.edu/v1/locks/92/",
+            "url": "https://api.lock.gsc.wustl.edu/v1/locks/97/",
+        ]
+    }
 
 ## DELETE
 Deletes the resource and all locks.
@@ -26,25 +34,35 @@ Omit for now?
 Creates a request for the lock.
 Sets Location header to the new lock [/v1/locks/(request-id)/].
 
-Body:
-{
-    "resource_name": (resource_name),
-    "timeout": (in seconds),
-    "requester_data": (potentially application specific),
-    "try_lock": (default false)
-}
+Sample body:
+
+    {
+        "niceness": 10,
+        "requester_data": { "foo": "bar" },
+        "resource": "https://api.lock.gsc.wustl.edu/v1/resources/asdf/",
+        "timeout": 600,
+        "try_lock": false,
+    }
 
 
 # /v1/locks/(request-id)/
 ## GET
-Get full request data:
-- lock name
-- timeout
-- requester data
-- status (queued, active, expired?, released?)
-    - with current prototype backend, expired and released would give 404s
-
 Clients poll this uri until their lock is active.
+
+Sample data:
+
+    {
+        "active_time": 4567,
+        "niceness": 10,
+        "requester_data": { "foo": "bar" },
+        "resource": "https://api.lock.gsc.wustl.edu/v1/resources/asdf/",
+        "status": "active",
+        "timeout": 600,
+        "try_lock": false,
+        "ttl": 421,
+        "url": "https://api.lock.gsc.wustl.edu/v1/locks/32/",
+        "wait_time": 123,
+    }
 
 ## PATCH
 ## PUT

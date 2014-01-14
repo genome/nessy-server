@@ -24,12 +24,12 @@ Deletes the resource and all locks.
 This is a maintenance task, do not allow for general users.
 Omit for now?
 
+Returns:
+- 204 (No Content) on success
+- 404 (Not Found) if no locks exist for the resource
+
 
 # /v1/locks/
-## GET
-Returns a list of locks.
-Omit for now?
-
 ## POST
 Creates a request for the lock.
 Sets Location header to the new lock [/v1/locks/(request-id)/].
@@ -43,6 +43,11 @@ Sample body:
         "timeout": 600,
         "try_lock": false,
     }
+
+Returns:
+- 201 (Created) if no contention and immediate success (Location header)
+- 202 (Accepted) if contention and `try_lock` not set (Location header)
+- 409 (Conflict) if contention and `try_lock` is set
 
 
 # /v1/locks/(request-id)/
@@ -64,11 +69,23 @@ Sample data:
         "wait_time": 123,
     }
 
+Returns:
+- 200 (OK) on success
+- 404 (Not Found) if lock doesn't exist
+
 ## PATCH
 ## PUT
 Heartbeat is accomplished by updating the ttl
+
+Returns:
+- 204 (No Content) on success
+- 404 (Not Found) if lock doesn't exist
 
 ## DELETE
 Release a lock or dequeue a request.
 A user can generally only delete their own locks (except for maintenance).
     - How does an application override a lock?
+
+Returns:
+- 204 (No Content) on success
+- 404 (Not Found) if lock doesn't exist

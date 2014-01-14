@@ -1,15 +1,9 @@
-import redis
 import time
 import unittest
 
+from .redis_base import RedisTest
 from libs import lock
 from libs.lock import exceptions
-
-
-class RedisTest(unittest.TestCase):
-    def setUp(self):
-        self.connection = redis.Redis()
-        self.connection.flushall()
 
 
 class LockDataTest(RedisTest):

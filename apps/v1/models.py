@@ -43,3 +43,4 @@ class Lock(models.Model):
 
     class Meta:
         unique_together = ('resource', 'request')
+        ordering = ['expiration_time']

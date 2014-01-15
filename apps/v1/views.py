@@ -15,6 +15,11 @@ class LockListView(mixins.ListModelMixin, generics.GenericAPIView):
         return self.list(request, *args, **kwargs)
 
 
+class LockDetailView(APIView):
+    def get(self, request, resource_name):
+        return Response('hi')
+
+
 class OwnerDetailView(APIView):
     def get(self, request, resource_name):
         return Response('hi')
@@ -25,20 +30,21 @@ class RequestListView(APIView):
         return Response('hi')
 
     def post(self, request, resource_name):
+        serializer = serializers.RequestSerializer(data=request.DATA)
         return Response(status=status.HTTP_201_CREATED)
 
 
-class RequestDetailView(APIView):
-    def get(self, request, resource_name, request_id):
+class RequestDetailView(mixins.RetrieveModelMixin, generics.GenericAPIView):
+    queryset = models.Request.objects.all()
+    serializer_class = serializers.RequestSerializer
+
+    def patch(self, request, request_id):
         return Response('hi')
 
-    def patch(self, request, resource_name, request_id):
+    def put(self, request, request_id):
         return Response('hi')
 
-    def put(self, request, resource_name, request_id):
-        return Response('hi')
-
-    def delete(self, request, resource_name, request_id):
+    def delete(self, request, request_id):
         return Response('hi')
 
 

@@ -1,130 +1,109 @@
-# /v1/locks/
-## GET
-Returns a list of locks (useful for maintenance).
+# Locking API Description
 
-# /v1/locks/(resource-name)/owner/
-## GET
+## /v1/locks/
+### GET
+Returns a list of locks.
 
-
-# /v1/locks/(resource-name)/requests/
-## POST
-Creates a request for the lock.
-Sets Location header to /v1/locks/(resource-name)/requests/(request-id)/
-
-Sample body:
-
-    {
-        "requester_data": { "foo": "bar" },
-        "timeout": 600,
-    }
-
-Returns:
-- 201 (Created) if no contention and immediate success (Location header)
-- 202 (Accepted) if contention (Location header)
+Response codes:
+- 200 (OK) on success
 
 
-## GET
-Returns a list of requests associated with the resource.
-
-# /v1/locks/(resource-name)/requests/(request-id)/
-## GET
-
-## PATCH/PUT
-- update ttl, don't update any attributes
-
-## DELETE
-- release or abandon request
-
-
-
-
-
-<!-- old -->
-
-
-# /v1/locks/(resource-name)/
-## GET
-Sample data:
+## /v1/locks/(resource-name)/
+### GET
+Sample response data:
 
     {
-        "url": "https://api.lock.gsc.wustl.edu/v1/resources/asdf/",
-        "owner": {
-            "url": "https://api.lock.gsc.wustl.edu/v1/locks/45/",
-            "active_time": 1234
-        },
-        "queue": [
-            "url": "https://api.lock.gsc.wustl.edu/v1/locks/92/",
-            "url": "https://api.lock.gsc.wustl.edu/v1/locks/97/",
+        "owner": "https://api.lock.gsc.wustl.edu/v1/locks/foo-resource-7/requests/27/",
+        "requests": [
+            "https://api.lock.gsc.wustl.edu/v1/locks/foo-resource-7/requests/27/",
+            "https://api.lock.gsc.wustl.edu/v1/locks/foo-resource-7/requests/32/",
+            "https://api.lock.gsc.wustl.edu/v1/locks/foo-resource-7/requests/76/",
         ]
     }
 
-## DELETE
-Deletes the resource and all locks.
-This is a maintenance task, do not allow for general users.
-Omit for now?
-
-Returns:
-- 204 (No Content) on success
-- 404 (Not Found) if no locks exist for the resource
-
-
-# /v1/locks/
-## POST
-Creates a request for the lock.
-Sets Location header to the new lock [/v1/locks/(request-id)/].
-
-Sample body:
-
-    {
-        "niceness": 10,
-        "requester_data": { "foo": "bar" },
-        "resource": "https://api.lock.gsc.wustl.edu/v1/resources/asdf/",
-        "timeout": 600,
-        "try_lock": false,
-    }
-
-Returns:
-- 201 (Created) if no contention and immediate success (Location header)
-- 202 (Accepted) if contention and `try_lock` not set (Location header)
-- 409 (Conflict) if contention and `try_lock` is set
-
-
-# /v1/locks/(request-id)/
-## GET
-Clients poll this uri until their lock is active.
-
-Sample data:
-
-    {
-        "active_time": 4567,
-        "niceness": 10,
-        "requester_data": { "foo": "bar" },
-        "resource": "https://api.lock.gsc.wustl.edu/v1/resources/asdf/",
-        "status": "active",
-        "timeout": 600,
-        "try_lock": false,
-        "ttl": 421,
-        "url": "https://api.lock.gsc.wustl.edu/v1/locks/32/",
-        "wait_time": 123,
-    }
-
-Returns:
+Response codes:
 - 200 (OK) on success
-- 404 (Not Found) if lock doesn't exist
+- 404 (Not Found) if resource doesn't exist
 
-## PATCH
-## PUT
-Heartbeat is accomplished by updating the ttl
 
-Returns:
+## /v1/locks/(resource-name)/owner/
+### GET
+Sample response data:
+
+    {
+        "duration_active": 4567,
+        "time_since_last_heartbeat": 139,
+        "ttl": 421,
+        "request": "https://api.lock.gsc.wustl.edu/v1/locks/foo-resource-7/requests/27/",
+    }
+
+Response codes:
+- 200 (OK) on success
+- 404 (Not Found) if request doesn't exist
+
+
+## /v1/locks/(resource-name)/requests/
+### POST
+Creates a request for the lock.
+
+Sample request data:
+
+    {
+        "requester_data": { "foo": "bar" },
+        "timeout": 600,
+    }
+
+Response codes:
+- 201 (Created) if no contention and immediate success
+    - header "Location: /v1/locks/(resource-name)/requests/(request-id)/"
+- 202 (Accepted) if contention (Location header)
+    - header "Location: /v1/locks/(resource-name)/requests/(request-id)/"
+
+
+### GET
+Returns a list of requests associated with the resource.
+
+Response codes:
+- 200 (OK) on success
+- 404 (Not Found) if resource doesn't exist?
+
+
+## /v1/locks/(resource-name)/requests/(request-id)/
+### GET
+Sample response data:
+
+    {
+        "creation_time": "2014-01-15 12:41:00 PM",
+        "current_status": "active",
+        "duration_active": 4567,
+        "duration_waiting": 123,
+        "requester_data": { "foo": "bar" },
+        "resource": "foo-resource-7",
+        "statuses": [
+            {"timestamp": "2014-01-15 12:41:00 PM", "type": "waiting"},
+            {"timestamp": "2014-01-15 12:42:03 PM", "type": "active"},
+        ],
+        "timeout": 600,
+        "url": "https://api.lock.gsc.wustl.edu/v1/locks/foo-resource-7/requests/27/",
+    }
+
+Response codes:
+- 200 (OK) on success
+- 404 (Not Found) if request doesn't exist
+
+### PATCH/PUT
+Update lock ttl (don't allow arbitrary attribute updates?).
+
+Response codes:
 - 204 (No Content) on success
-- 404 (Not Found) if lock doesn't exist
+- 404 (Not Found) if request doesn't exist
+- 412 (Precondition Failed) if request is not active
 
-## DELETE
-Release a lock or dequeue a request.
-A user can generally only delete their own locks (except for maintenance).
-    - How does an application override a lock?
+### DELETE
+Update request status to 'released' or 'abandoned' from 'active' or 'waiting'
+respectively.
 
-Returns:
+Response codes:
 - 204 (No Content) on success
-- 404 (Not Found) if lock doesn't exist
+- 404 (Not Found) if request doesn't exist
+- 412 (Precondition Failed) if request is already released or abandoned

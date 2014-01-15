@@ -20,8 +20,7 @@ Sample body:
 
 Returns:
 - 201 (Created) if no contention and immediate success (Location header)
-- 202 (Accepted) if contention and `try_lock` not set (Location header)
-- 409 (Conflict) if contention and `try_lock` is set
+- 202 (Accepted) if contention (Location header)
 
 
 ## GET
@@ -31,8 +30,10 @@ Returns a list of requests associated with the resource.
 ## GET
 
 ## PATCH/PUT
+- update ttl, don't update any attributes
 
 ## DELETE
+- release or abandon request
 
 
 

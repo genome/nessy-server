@@ -1,7 +1,7 @@
 from django.conf.urls import patterns, include, url
 from . import views
 
-_RESOURCE_NAME = '(?P<resource_name>\w{1,64})'
+_RESOURCE_NAME = '(?P<resource_name>[A-Za-z0-9:_-]{1,64})'
 
 urlpatterns = patterns('',
     url(r'^$', views.APIRootView.as_view()),

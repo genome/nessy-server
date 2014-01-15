@@ -1,5 +1,7 @@
 django
 djangorestframework
+django-json-field
+django-timedeltafield
 hiredis
 redis
 simplejson

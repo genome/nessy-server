@@ -1,35 +1,49 @@
-from rest_framework.viewsets import ViewSet
+from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import generics, mixins, status
+from rest_framework.reverse import reverse
 
-from libs import lock
+from . import models
+from . import serializers
 
-class LockViewSet(ViewSet):
-    def create(self, request):
-        return Response('hi', status=status.HTTP_201_CREATED)
 
-    def list(self, request):
+class LockListView(mixins.ListModelMixin, generics.GenericAPIView):
+    queryset = models.Lock.objects.all()
+    serializer_class = serializers.LockSerializer
+
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+
+class OwnerDetailView(APIView):
+    def get(self, request, resource_name):
         return Response('hi')
 
-    def retrieve(self, request, pk=None):
+
+class RequestListView(APIView):
+    def get(self, request, resource_name):
         return Response('hi')
 
-    def update(self, request, pk=None):
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-    def partial_update(self, request, pk=None):
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-    def destroy(self, request, pk=None):
-        return Response(status=status.HTTP_204_NO_CONTENT)
+    def post(self, request, resource_name):
+        return Response(status=status.HTTP_201_CREATED)
 
 
-class ResourceViewSet(ViewSet):
-    def list(self, request):
+class RequestDetailView(APIView):
+    def get(self, request, resource_name, request_id):
         return Response('hi')
 
-    def retrieve(self, request, pk=None):
+    def patch(self, request, resource_name, request_id):
         return Response('hi')
 
-    def destroy(self, request, pk=None):
-        return Response(status=status.HTTP_204_NO_CONTENT)
+    def put(self, request, resource_name, request_id):
+        return Response('hi')
+
+    def delete(self, request, resource_name, request_id):
+        return Response('hi')
+
+
+class APIRootView(APIView):
+    def get(self, request, format=None):
+        return Response({
+            'locks': reverse('lock-list', request=request, format=format),
+        })

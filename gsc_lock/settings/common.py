@@ -24,6 +24,7 @@ DEFAULT_APPS = [
 ]
 
 THIRD_PARTY_APPS = [
+    'json_field',
     'rest_framework',
     'timedelta',
 ]

@@ -1,9 +1,47 @@
-# /v1/resources/
+# /v1/locks/
 ## GET
-Returns a list of resources (useful for maintenance).
+Returns a list of locks (useful for maintenance).
+
+# /v1/locks/(resource-name)/owner/
+## GET
 
 
-# /v1/resources/(resource-name)/
+# /v1/locks/(resource-name)/requests/
+## POST
+Creates a request for the lock.
+Sets Location header to /v1/locks/(resource-name)/requests/(request-id)/
+
+Sample body:
+
+    {
+        "requester_data": { "foo": "bar" },
+        "timeout": 600,
+    }
+
+Returns:
+- 201 (Created) if no contention and immediate success (Location header)
+- 202 (Accepted) if contention and `try_lock` not set (Location header)
+- 409 (Conflict) if contention and `try_lock` is set
+
+
+## GET
+Returns a list of requests associated with the resource.
+
+# /v1/locks/(resource-name)/requests/(request-id)/
+## GET
+
+## PATCH/PUT
+
+## DELETE
+
+
+
+
+
+<!-- old -->
+
+
+# /v1/locks/(resource-name)/
 ## GET
 Sample data:
 

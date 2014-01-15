@@ -1,12 +1,14 @@
 from django.conf.urls import patterns, include, url
 from apps.v1 import views as views_v1
-from rest_framework import routers
-
-router_v1 = routers.DefaultRouter()
-router_v1.register(r'locks', views_v1.LockViewSet, base_name='Lock')
-router_v1.register(r'resources', views_v1.ResourceViewSet, base_name='Resource')
 
 
 urlpatterns = patterns('',
-    url(r'^v1/', include(router_v1.urls)),
+    url(r'^v1/$', views_v1.APIRootView.as_view()),
+    url(r'^v1/locks/$', views_v1.LockListView.as_view(), name='lock-list'),
+    url(r'^v1/locks/(?P<resource_name>\w{1,64})/owner/$',
+        views_v1.OwnerDetailView.as_view()),
+    url(r'^v1/locks/(?P<resource_name>\w{1,64})/requests/$',
+        views_v1.RequestListView.as_view()),
+    url(r'^v1/locks/(?P<resource_name>\w{1,64})/requests/(?P<request_id>\w+)/$',
+        views_v1.RequestDetailView.as_view()),
 )

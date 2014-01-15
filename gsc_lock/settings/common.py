@@ -25,7 +25,7 @@ DEFAULT_APPS = [
 
 THIRD_PARTY_APPS = [
     'rest_framework',
-    'redis_cache',
+    'timedelta',
 ]
 
 LOCAL_APPS = utils.local_app_names()

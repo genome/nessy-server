@@ -51,7 +51,7 @@ class TTLField(serializers.WritableField):
 
 
 class ClaimSerializer(serializers.HyperlinkedModelSerializer):
-    current_status = serializers.SerializerMethodField('get_current_status')
+    current_status = serializers.Field('current_status')
     metadata = serializers.WritableField()
     resource = serializers.CharField()
     status_history = StatusHistorySerializer(many=True, read_only=True)
@@ -69,12 +69,6 @@ class ClaimSerializer(serializers.HyperlinkedModelSerializer):
                 'timeout',
                 'ttl',
                 )
-
-    def get_current_status(self, obj):
-        try:
-            return obj.status_history.latest('timestamp').get_type_display()
-        except models.ClaimStatus.DoesNotExist:
-            return None
 
     def validate_timeout(self, attrs, source):
         if attrs[source].total_seconds() < 0:

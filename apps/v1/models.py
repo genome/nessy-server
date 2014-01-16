@@ -26,6 +26,12 @@ class Claim(models.Model):
     class Meta:
         ordering = ['creation_time']
 
+    def current_status(self):
+        try:
+            return self.status_history.latest('timestamp').get_type_display()
+        except ClaimStatus.DoesNotExist:
+            return None
+
 
 STATUS_WAITING   = 0
 STATUS_ACTIVE    = 2

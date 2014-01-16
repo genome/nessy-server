@@ -34,7 +34,7 @@ class TTLField(serializers.WritableField):
         if obj:
             try:
                 lock = models.Lock.objects.filter(claim=obj).get()
-                lock.expiration_time = 0
+                lock.expiration_time = datetime.timedelta(seconds=obj.timeout)
                 lock.save()
             except models.Lock.DoesNotExist:
                 pass

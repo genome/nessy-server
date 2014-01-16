@@ -30,18 +30,22 @@ class CurrentStatusField(serializers.WritableField):
         if claim is not None:
             desired_status = data['current_status']
             if desired_status == 'active':
-                transactions.promote_lock(claim.resource)
-                if claim.current_status() != 'active':
-                    raise exceptions.LockContention()
+                if not transactions.promote_claim(claim):
+                    raise exceptions.LockContention(
+                            'Could not promote lock.  Try again later.')
+                else:
+                    into['current_status'] = models.STATUS_ACTIVE
 
             elif desired_status == 'released':
                 try:
                     transactions.release_lock(claim)
+                    into['current_status'] = models.STATUS_RELEASED
                 except models.Lock.DoesNotExist:
+                    # XXX a real exception here is appropriate
                     pass
 
     def field_to_native(self, obj, field_name):
-        return obj.current_status()
+        return obj.get_current_status_display()
 
 
 class StatusHistorySerializer(serializers.ModelSerializer):
@@ -56,6 +60,7 @@ class TTLField(serializers.WritableField):
         obj = self.parent.object
         if obj:
             try:
+                # XXX Race here, catch db exception and raise API exception
                 lock = models.Lock.objects.filter(claim=obj).get()
                 lock.expiration_time = obj.timeout
                 lock.save()
@@ -74,7 +79,7 @@ class TTLField(serializers.WritableField):
 
 
 class ClaimSerializer(serializers.HyperlinkedModelSerializer):
-    current_status = CurrentStatusField(required=False)
+    current_status = CurrentStatusField()
     metadata = serializers.WritableField()
     resource = serializers.CharField()
     status_history = StatusHistorySerializer(many=True, read_only=True)

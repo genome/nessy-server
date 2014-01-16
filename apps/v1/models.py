@@ -6,45 +6,49 @@ import json_field
 import pytz
 import timedelta
 
+
+STATUS_WAITING   = 0
+STATUS_ACTIVE    = 2
+STATUS_RELEASED  = 4
+STATUS_ABANDONED = 6
+STATUS_EXPIRED   = 8
+STATUS_CHOICES = (
+    (STATUS_WAITING,   'waiting'),
+    (STATUS_ACTIVE,    'active'),
+    (STATUS_RELEASED,  'released'),
+    (STATUS_ABANDONED, 'abandoned'),
+    (STATUS_EXPIRED,   'expired'),
+)
+
+
 class AutoNowDateTimeField(models.DateTimeField):
     def pre_save(self, model_instance, add):
         return get_canonical_time()
+
 
 class AutoNowPlusDateTimeField(models.DateTimeField):
     def pre_save(self, model_instance, add):
         now = get_canonical_time()
         return now + getattr(model_instance, self.attname, 0)
 
+
 class Claim(models.Model):
     creation_time = AutoNowDateTimeField(db_index=True)
 
     resource =  models.TextField(db_index=True)
     timeout = timedelta.fields.TimedeltaField()
+    current_status = models.IntegerField(choices=STATUS_CHOICES,
+            default=STATUS_WAITING)
 
     metadata = json_field.JSONField()
 
     class Meta:
         ordering = ['creation_time']
 
-    def current_status(self):
-        try:
-            # Manually find the latest, since 'latest' is hitting the cache
-            sh_list = list(self.status_history.all())
-            return sh_list[-1].get_type_display()
-        except ClaimStatus.DoesNotExist:
-            return None
+    def refresh(self):
+        return Claim.objects.all().get(id=self.id)
 
 
-STATUS_WAITING   = 0
-STATUS_ACTIVE    = 2
-STATUS_RELEASED  = 4
-STATUS_ABANDONED = 6
-STATUS_CHOICES = (
-    (STATUS_WAITING,   'waiting'),
-    (STATUS_ACTIVE,    'active'),
-    (STATUS_RELEASED,  'released'),
-    (STATUS_ABANDONED, 'abandoned'),
-)
 class ClaimStatus(models.Model):
     type = models.IntegerField(choices=STATUS_CHOICES)
     timestamp = AutoNowDateTimeField(db_index=True)

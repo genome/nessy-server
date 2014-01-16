@@ -21,12 +21,11 @@ class ClaimViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin,
             claim = request_serializer.object
             transactions.insert_new_claim(claim)
 
-            try:
-                transactions.insert_lock(claim)
-                return _make_post_response(request, claim,
+            if transactions.promote_claim(claim):
+                return _make_post_response(request, claim.refresh(),
                         status=status.HTTP_201_CREATED)
 
-            except IntegrityError:
+            else:
                 return _make_post_response(request, claim,
                         status=status.HTTP_202_ACCEPTED)
 

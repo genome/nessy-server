@@ -59,12 +59,27 @@ class ClaimTest(APITestCase):
                 current_status='released')
         self.assertEqual(status.HTTP_200_OK, release_response.status_code)
 
-    def test_patch_status_from_active_to_released_should_release_lock(self):
+    def test_patch_status_from_active_to_released_should_set_released(self):
+        create_response_1 = self.post()
+        release_response = self.patch(create_response_1['Location'],
+                current_status='released')
+        status_response = self.get(create_response_1['Location'])
+        self.assertEqual('released', status_response.data['current_status'])
+
+    def test_patch_status_from_active_to_released_should_allow_new_lock(self):
         create_response_1 = self.post()
         release_response = self.patch(create_response_1['Location'],
                 current_status='released')
         create_response_2 = self.post()
         self.assertEqual('active', create_response_2.data['current_status'])
+
+    def test_patch_status_from_active_to_released_should_preserve_order(self):
+        create_response_1 = self.post()
+        create_response_2 = self.post()
+        release_response = self.patch(create_response_1['Location'],
+                current_status='released')
+        create_response_3 = self.post()
+        self.assertEqual(status.HTTP_202_ACCEPTED, create_response_3.status_code)
 
     def test_claim_with_contention_should_wait(self):
         response_1 = self.post()
@@ -77,7 +92,7 @@ class ClaimTest(APITestCase):
         release_response_1 = self.patch(create_response_1['Location'],
                 current_status='released')
 
-        activate_response_2 = self.patch(create_response_1['Location'],
+        activate_response_2 = self.patch(create_response_2['Location'],
                 current_status='active')
         self.assertEqual(status.HTTP_200_OK, activate_response_2.status_code)
 
@@ -87,7 +102,7 @@ class ClaimTest(APITestCase):
         release_response_1 = self.patch(create_response_1['Location'],
                 current_status='released')
 
-        activate_response_2 = self.patch(create_response_1['Location'],
+        activate_response_2 = self.patch(create_response_2['Location'],
                 current_status='active')
         self.assertEqual('active', activate_response_2.data['current_status'])
 

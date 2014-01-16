@@ -9,7 +9,10 @@ def update_resource_status(resource):
     except IntegrityError:
         pass
 
-    _promote_lock_for_resource(resource)
+    try:
+        return _promote_lock_for_resource(resource)
+    except IntegrityError:
+        pass
 
 def _expire_lock_for_resource_if_timed_out(resource):
     try:
@@ -18,7 +21,6 @@ def _expire_lock_for_resource_if_timed_out(resource):
             claim = lock.claim
             claim.update_status(models.STATUS_EXPIRED)
             lock.delete()
-            lock.save()
 
     except models.Lock.DoesNotExist:
         pass
@@ -34,6 +36,8 @@ def _promote_lock_for_resource(resource):
     lock = models.Lock.objects.create(resource=claim.resource, claim=claim,
             expiration_time=expiration_time)
     claim.update_status(models.STATUS_ACTIVE)
+
+    return claim
 
 
 def release_claim(claim):

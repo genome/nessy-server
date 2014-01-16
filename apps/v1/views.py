@@ -18,14 +18,16 @@ class ClaimViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin,
     def create(self, request):
         claim = extract_claim(request)
         claim.update_status(models.STATUS_WAITING)
+        claim.save()
 
-        try:
-            with transaction.atomic():
-                transactions.update_resource_status(claim.resource)
+        with transaction.atomic():
+            active_claim = transactions.update_resource_status(claim.resource)
+
+        if claim == active_claim:
             return _make_post_response(request, claim.refresh(),
                     status=status.HTTP_201_CREATED)
 
-        except IntegrityError:
+        else:
             return _make_post_response(request, claim,
                     status=status.HTTP_202_ACCEPTED)
 

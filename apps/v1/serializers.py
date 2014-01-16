@@ -32,6 +32,8 @@ class CurrentStatusField(serializers.WritableField):
             if claim is not None:
                 desired_status = data['current_status']
                 if desired_status == 'active':
+                    if claim.current_status != models.STATUS_ACTIVE:
+                        raise exceptions.LockContention('Not yet')
                     into['current_status'] = models.STATUS_ACTIVE
 
                 elif desired_status == 'released':

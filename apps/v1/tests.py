@@ -10,7 +10,7 @@ class ClaimTest(APITestCase):
     def setUp(self):
         APITestCase.setUp(self)
         self.claim_data = {
-            'timeout': 0.010,
+            'timeout': 0.040,
             'resource': 'resource-foo',
             'metadata': {
                 'baz': 'buz',
@@ -131,6 +131,13 @@ class ClaimTest(APITestCase):
                 current_status='active')
         status_response_3 = self.get(create_response_3['Location'])
         self.assertEqual('waiting', status_response_3.data['current_status'])
+
+    def test_expired_lock_should_allow_new_claim(self):
+        create_response_1 = self.post()
+        time.sleep(self.claim_data['timeout'])
+
+        create_response_2 = self.post()
+        self.assertEqual(status.HTTP_201_CREATED, create_response_2.status_code)
 
     def test_expired_lock_should_have_negative_ttl(self):
         create_response = self.post()

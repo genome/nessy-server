@@ -4,9 +4,7 @@ from django.db import IntegrityError, transaction
 
 @transaction.atomic
 def insert_new_claim(claim):
-    claim.current_status = models.STATUS_WAITING
-    claim.save()
-    claim.status_history.create(type=models.STATUS_WAITING)
+    claim.update_status(models.STATUS_WAITING)
 
     return claim
 
@@ -40,9 +38,7 @@ def _expire_lock(resource, now):
                 expiration_time__lt=now).get()
         claim = lock.claim
         lock.delete()
-        claim.current_status = models.STATUS_EXPIRED
-        claim.save()
-        claim.status_history.create(type=models.STATUS_EXPIRED)
+        claim.update_status(models.STATUS_EXPIRED)
 
     except models.Lock.DoesNotExist:
         pass
@@ -52,9 +48,7 @@ def insert_lock(claim):
     lock = models.Lock(resource=claim.resource, claim=claim,
             expiration_time=claim.timeout)
     lock.save()
-    claim.current_status = models.STATUS_ACTIVE
-    claim.save()
-    claim.status_history.create(type=models.STATUS_ACTIVE)
+    claim.update_status(models.STATUS_ACTIVE)
 
     return lock
 
@@ -62,6 +56,4 @@ def insert_lock(claim):
 def release_lock(claim):
     lock = claim.lock.get()
     lock.delete()
-    claim.current_status = models.STATUS_RELEASED
-    claim.save()
-    claim.status_history.create(type=models.STATUS_RELEASED)
+    claim.update_status(models.STATUS_RELEASED)

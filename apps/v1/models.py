@@ -1,4 +1,4 @@
-from django.db import connection, models
+from django.db import connection, models, transaction
 
 import datetime
 import dateutil.parser
@@ -47,6 +47,12 @@ class Claim(models.Model):
 
     def refresh(self):
         return Claim.objects.all().get(id=self.id)
+
+    @transaction.atomic
+    def update_status(self, new_status):
+        self.current_status = new_status
+        self.save()
+        self.status_history.create(type=new_status)
 
 
 class ClaimStatus(models.Model):

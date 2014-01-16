@@ -28,12 +28,36 @@ class StatusHistorySerializer(serializers.ModelSerializer):
         fields = ('type', 'timestamp')
 
 
+class TTLField(serializers.WritableField):
+    def field_from_native(self, data, files, field_name, into):
+        obj = self.parent.object
+        if obj:
+            try:
+                lock = models.Lock.objects.filter(claim=obj).get()
+                lock.expiration_time = 0
+                lock.save()
+            except models.Lock.DoesNotExist:
+                pass
+
+    def field_to_native(self, obj, field_name):
+        if obj:
+            try:
+                lock = models.Lock.objects.filter(claim=obj).get()
+                return lock.ttl().total_seconds()
+            except models.Lock.DoesNotExist:
+                pass
+
+        return None
+
+
 class ClaimSerializer(serializers.HyperlinkedModelSerializer):
     current_status = serializers.SerializerMethodField('get_current_status')
     metadata = serializers.WritableField()
     resource = serializers.CharField()
     status_history = StatusHistorySerializer(many=True, read_only=True)
     timeout = TimeDeltaField()
+
+    ttl = TTLField(required=False)
 
     class Meta:
         model = models.Claim
@@ -43,6 +67,7 @@ class ClaimSerializer(serializers.HyperlinkedModelSerializer):
                 'resource',
                 'status_history',
                 'timeout',
+                'ttl',
                 )
 
     def get_current_status(self, obj):

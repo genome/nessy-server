@@ -37,6 +37,11 @@ class ClaimTest(APITestCase):
         response = self.post()
         self.assertEqual('active', response.data['current_status'])
 
+    def test_get_active_lock_should_return_ttl(self):
+        post_response = self.post()
+        get_response = self.client.get(post_response['Location'])
+        self.assertGreater(post_response.data['ttl'], 0)
+
     def test_claim_with_contention_should_wait(self):
         response_1 = self.post()
         response_2 = self.post()

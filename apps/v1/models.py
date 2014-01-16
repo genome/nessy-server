@@ -1,6 +1,9 @@
-from django.db import models
+from django.db import connection, models
 
+import datetime
+import dateutil.parser
 import json_field
+import pytz
 import timedelta
 
 
@@ -53,3 +56,12 @@ class Lock(models.Model):
 
     class Meta:
         ordering = ['expiration_time']
+
+    def ttl(self):
+        cursor = connection.cursor()
+        result = cursor.execute('select current_timestamp')
+        rows = result.fetchall()
+        now = dateutil.parser.parse(rows[0][0])
+        if now.tzinfo is None:
+            now = now.replace(tzinfo=pytz.timezone('UTC'))
+        return self.expiration_time - now

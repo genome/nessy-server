@@ -21,27 +21,22 @@ class TimeDeltaField(serializers.FloatField):
         return value.total_seconds()
 
 
-class RequestSerializer(serializers.HyperlinkedModelSerializer):
+class ClaimSerializer(serializers.HyperlinkedModelSerializer):
     current_status = serializers.SerializerMethodField('get_current_status')
     timeout = TimeDeltaField()
-    resource = serializers.PrimaryKeyRelatedField()
+    resource = serializers.CharField()
 
-#    requester_data = serializers.DictWithMetadata()
+#    metadata = serializers.DictWithMetadata()
 
     class Meta:
-        model = models.Request
-        fields = ('url', 'current_status', 'resource', #'requester_data',
+        model = models.Claim
+        fields = ('url', 'current_status', 'resource', #'metadata',
                 'timeout')
 
     def get_current_status(self, obj):
-        return obj.statuses.latest('timestamp').get_type_display()
+        return obj.status_history.latest('timestamp').get_type_display()
 
     def validate_timeout(self, attrs, source):
         if attrs[source].total_seconds() < 0:
             raise serializers.ValidationError('timeout cannot be negative')
         return attrs
-
-
-class LockSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.Lock

@@ -1,6 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import generics, mixins, status
+from rest_framework import generics, mixins, status, viewsets
 from rest_framework.reverse import reverse
 from django.db import IntegrityError, transaction
 
@@ -8,92 +8,58 @@ from . import models
 from . import serializers
 
 
-class LockListView(mixins.ListModelMixin, generics.GenericAPIView):
-    queryset = models.Lock.objects.all()
-    serializer_class = serializers.LockSerializer
+class ClaimViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin,
+        viewsets.GenericViewSet):
+    queryset = models.Claim.objects.all()
+    serializer_class = serializers.ClaimSerializer
 
-    def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
-
-
-class LockDetailView(APIView):
-    def get(self, request, resource_name):
-        return Response('hi')
-
-
-class OwnerDetailView(APIView):
-    def get(self, request, resource_name):
-        return Response('hi')
-
-
-class RequestListView(APIView):
-    def get(self, request, resource_name):
-        return Response('hi')
-
-    def post(self, request, resource_name):
-        resource, _ = models.Resource.objects.get_or_create(name=resource_name)
-
-        data = request.DATA
-        data['resource'] = resource_name
-        serializer = serializers.RequestSerializer(data=data)
-
-        if serializer.is_valid():
-            lock_request = _insert_new_lock_request(serializer.object)
+    def create(self, request):
+        request_serializer = serializers.ClaimSerializer(data=request.DATA)
+        if request_serializer.is_valid():
+            claim = request_serializer.object
+            _insert_new_claim(claim)
 
             try:
-                lock = _insert_new_lock(lock_request)
-                response_serializer = serializers.RequestSerializer(
-                        lock_request)
-                return Response(response_serializer.data,
+                _insert_lock(claim)
+                response_serializer = serializers.ClaimSerializer(claim)
+                response = Response(response_serializer.data,
                         status=status.HTTP_201_CREATED)
+                response['Location'] = reverse('claim-detail', kwargs={'pk':
+                    claim.id})
+                return response
+
             except IntegrityError:
-                return Response(response_serializer.data,
+                response_serializer = serializers.ClaimSerializer(claim)
+                response = Response(response_serializer.data,
                         status=status.HTTP_202_ACCEPTED)
+                response['Location'] = reverse('claim-detail', kwargs={'pk':
+                    claim.id})
+                return response
+
         else:
-            return Response('More descriptive', status=status.HTTP_400)
+            return Response(request_serializer.errors,
+                    status=status.HTTP_400_BAD_REQUEST)
 
+    def update(self, request, pk=None):
+        pass
+
+    def partial_update(self, request, pk=None):
+        pass
+
+    def destroy(self, request, pk=None):
+        pass
 
 @transaction.atomic
-def _insert_new_lock_request(lock_request):
-    lock_request.save()
-    lock_request.statuses.create(type=models.STATUS_WAITING)
+def _insert_new_claim(claim):
+    claim.save()
+    claim.status_history.create(type=models.STATUS_WAITING)
 
-    return lock_request
+    return claim
 
 @transaction.atomic
-def _insert_new_lock(lock_request):
-    lock = models.Lock(resource=lock_request.resource, request=lock_request,
-            expiration_time=lock_request.timeout)
-    lock_request.statuses.create(type=models.STATUS_ACTIVE)
+def _insert_lock(claim):
+    lock = models.Lock(resource=claim.resource, claim=claim,
+            expiration_time=claim.timeout)
+    claim.status_history.create(type=models.STATUS_ACTIVE)
 
     return lock
-
-
-class RequestListView(mixins.ListModelMixin, generics.GenericAPIView):
-    queryset = models.Request.objects.all()
-    serializer_class = serializers.RequestSerializer
-
-    def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
-
-
-class RequestDetailView(mixins.RetrieveModelMixin, generics.GenericAPIView):
-    queryset = models.Request.objects.all()
-    serializer_class = serializers.RequestSerializer
-
-    def patch(self, request, request_id):
-        return Response('hi')
-
-    def put(self, request, request_id):
-        return Response('hi')
-
-    def delete(self, request, request_id):
-        return Response('hi')
-
-
-class APIRootView(APIView):
-    def get(self, request, format=None):
-        return Response({
-            'locks': reverse('lock-list', request=request, format=format),
-            'requests': reverse('request-list', request=request, format=format),
-        })

@@ -4,17 +4,13 @@ import json_field
 import timedelta
 
 
-class Resource(models.Model):
-    name = models.TextField(primary_key=True)
-
-
-class Request(models.Model):
+class Claim(models.Model):
     creation_time = models.DateTimeField(auto_now=True)
 
-    resource = models.ForeignKey(Resource, related_name='requests')
+    resource =  models.TextField(db_index=True)
     timeout = timedelta.fields.TimedeltaField()
 
-#    requester_data = json_field.JSONField()
+#    metadata = json_field.JSONField()
 
     class Meta:
         ordering = ['creation_time']
@@ -30,18 +26,18 @@ STATUS_CHOICES = (
     (STATUS_RELEASED,  'released'),
     (STATUS_ABANDONED, 'abandoned'),
 )
-class RequestStatus(models.Model):
+class ClaimStatus(models.Model):
     type = models.IntegerField(choices=STATUS_CHOICES)
     timestamp = models.DateTimeField(auto_now=True, db_index=True)
-    request = models.ForeignKey(Request, related_name='statuses')
+    claim = models.ForeignKey(Claim, related_name='status_history')
 
     class Meta:
         ordering = ['timestamp']
 
 
 class Lock(models.Model):
-    resource = models.ForeignKey(Resource, related_name='lock')
-    request = models.ForeignKey(Request, related_name='lock')
+    resource =  models.TextField(db_index=True)
+    claim = models.ForeignKey(Claim, related_name='lock')
 
     creation_time = models.DateTimeField(auto_now=True, db_index=True)
     expiration_time = models.DateTimeField(auto_now_add=True, db_index=True)
@@ -49,5 +45,5 @@ class Lock(models.Model):
             db_index=True)
 
     class Meta:
-        unique_together = ('resource', 'request')
+        unique_together = ('resource', 'claim')
         ordering = ['expiration_time']

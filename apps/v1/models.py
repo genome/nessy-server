@@ -20,11 +20,18 @@ STATUS_WAITING   = 0
 STATUS_ACTIVE    = 2
 STATUS_RELEASED  = 4
 STATUS_ABANDONED = 6
+STATUS_LOOKUP = {
+    STATUS_WAITING:   'waiting',
+    STATUS_ACTIVE:    'active',
+    STATUS_RELEASED:  'released',
+    STATUS_ABANDONED: 'abandoned',
+}
+
 STATUS_CHOICES = (
-    (STATUS_WAITING,   'waiting'),
-    (STATUS_ACTIVE,    'active'),
-    (STATUS_RELEASED,  'released'),
-    (STATUS_ABANDONED, 'abandoned'),
+    (STATUS_WAITING,   STATUS_LOOKUP[STATUS_WAITING]),
+    (STATUS_ACTIVE,    STATUS_LOOKUP[STATUS_ACTIVE]),
+    (STATUS_RELEASED,  STATUS_LOOKUP[STATUS_RELEASED]),
+    (STATUS_ABANDONED, STATUS_LOOKUP[STATUS_ABANDONED]),
 )
 class ClaimStatus(models.Model):
     type = models.IntegerField(choices=STATUS_CHOICES)
@@ -39,7 +46,7 @@ class Lock(models.Model):
     resource =  models.TextField(db_index=True)
     claim = models.ForeignKey(Claim, related_name='lock')
 
-    creation_time = models.DateTimeField(auto_now=True, db_index=True)
+    activation_time = models.DateTimeField(auto_now=True, db_index=True)
     expiration_time = models.DateTimeField(auto_now_add=True, db_index=True)
     expiration_update_time = models.DateTimeField(auto_now_add=True,
             db_index=True)

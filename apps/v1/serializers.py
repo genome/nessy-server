@@ -21,17 +21,34 @@ class TimeDeltaField(serializers.FloatField):
         return value.total_seconds()
 
 
+class StatusTypeField(serializers.RelatedField):
+    def to_native(self, value):
+        return models.STATUS_LOOKUP[value]
+
+
+class StatusHistorySerializer(serializers.ModelSerializer):
+    type = StatusTypeField()
+    class Meta:
+        model = models.ClaimStatus
+        fields = ('type', 'timestamp')
+
+
 class ClaimSerializer(serializers.HyperlinkedModelSerializer):
     current_status = serializers.SerializerMethodField('get_current_status')
-    timeout = TimeDeltaField()
-    resource = serializers.CharField()
-
     metadata = serializers.WritableField()
+    resource = serializers.CharField()
+    status_history = StatusHistorySerializer(many=True, read_only=True)
+    timeout = TimeDeltaField()
 
     class Meta:
         model = models.Claim
-        fields = ('url', 'current_status', 'resource', 'metadata',
-                'timeout')
+        fields = ('url',
+                'current_status',
+                'metadata',
+                'resource',
+                'status_history',
+                'timeout',
+                )
 
     def get_current_status(self, obj):
         return obj.status_history.latest('timestamp').get_type_display()

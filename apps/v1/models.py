@@ -43,7 +43,7 @@ class ClaimStatus(models.Model):
 
 
 class Lock(models.Model):
-    resource =  models.TextField(db_index=True)
+    resource =  models.TextField(unique=True)
     claim = models.ForeignKey(Claim, related_name='lock')
 
     activation_time = models.DateTimeField(auto_now=True, db_index=True)
@@ -52,5 +52,4 @@ class Lock(models.Model):
             db_index=True)
 
     class Meta:
-        unique_together = ('resource', 'claim')
         ordering = ['expiration_time']

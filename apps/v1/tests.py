@@ -42,6 +42,12 @@ class ClaimTest(APITestCase):
         get_response = self.client.get(post_response['Location'])
         self.assertGreater(post_response.data['ttl'], 0)
 
+    def test_inital_ttl_should_be_close_to_timeout(self):
+        post_response = self.post()
+        get_response = self.client.get(post_response['Location'])
+        self.assertGreater(post_response.data['ttl'],
+                self.claim_data['timeout'] - 0.002)
+
     def test_claim_with_contention_should_wait(self):
         response_1 = self.post()
         response_2 = self.post()

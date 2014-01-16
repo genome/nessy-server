@@ -28,7 +28,9 @@ class Claim(models.Model):
 
     def current_status(self):
         try:
-            return self.status_history.latest('timestamp').get_type_display()
+            # Manually find the latest, since 'latest' is hitting the cache
+            sh_list = list(self.status_history.all())
+            return sh_list[-1].get_type_display()
         except ClaimStatus.DoesNotExist:
             return None
 

@@ -10,7 +10,7 @@ class Claim(models.Model):
     resource =  models.TextField(db_index=True)
     timeout = timedelta.fields.TimedeltaField()
 
-#    metadata = json_field.JSONField()
+    metadata = json_field.JSONField()
 
     class Meta:
         ordering = ['creation_time']

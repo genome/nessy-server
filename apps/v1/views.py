@@ -21,20 +21,12 @@ class ClaimViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin,
 
             try:
                 _insert_lock(claim)
-                response_serializer = serializers.ClaimSerializer(claim)
-                response = Response(response_serializer.data,
+                return _make_post_response(claim,
                         status=status.HTTP_201_CREATED)
-                response['Location'] = reverse('claim-detail', kwargs={'pk':
-                    claim.id})
-                return response
 
             except IntegrityError:
-                response_serializer = serializers.ClaimSerializer(claim)
-                response = Response(response_serializer.data,
+                return _make_post_response(claim,
                         status=status.HTTP_202_ACCEPTED)
-                response['Location'] = reverse('claim-detail', kwargs={'pk':
-                    claim.id})
-                return response
 
         else:
             return Response(request_serializer.errors,
@@ -63,3 +55,9 @@ def _insert_lock(claim):
     claim.status_history.create(type=models.STATUS_ACTIVE)
 
     return lock
+
+def _make_post_response(claim, status):
+    serializer = serializers.ClaimSerializer(claim)
+    response = Response(serializer.data, status=status)
+    response['Location'] = reverse('claim-detail', kwargs={'pk': claim.id})
+    return response

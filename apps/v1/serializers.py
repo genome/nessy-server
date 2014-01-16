@@ -26,11 +26,11 @@ class ClaimSerializer(serializers.HyperlinkedModelSerializer):
     timeout = TimeDeltaField()
     resource = serializers.CharField()
 
-#    metadata = serializers.DictWithMetadata()
+    metadata = serializers.WritableField()
 
     class Meta:
         model = models.Claim
-        fields = ('url', 'current_status', 'resource', #'metadata',
+        fields = ('url', 'current_status', 'resource', 'metadata',
                 'timeout')
 
     def get_current_status(self, obj):

@@ -1,4 +1,6 @@
 from . import models
+from . import transactions
+from django.db import IntegrityError
 from rest_framework import serializers
 
 import datetime
@@ -21,6 +23,27 @@ class TimeDeltaField(serializers.FloatField):
         return value.total_seconds()
 
 
+class CurrentStatusField(serializers.WritableField):
+    def field_from_native(self, data, files, field_name, into):
+        claim = self.parent.object
+        if claim is not None:
+            desired_status = data['current_status']
+            if desired_status == 'active':
+                try:
+                    transactions.insert_lock(claim)
+                except IntegrityError:
+                    pass
+
+            elif desired_status == 'released':
+                try:
+                    transactions.release_lock(claim)
+                except models.Lock.DoesNotExist:
+                    pass
+
+    def field_to_native(self, obj, field_name):
+        return obj.current_status()
+
+
 class StatusHistorySerializer(serializers.ModelSerializer):
     type = serializers.Field(source='get_type_display')
     class Meta:
@@ -34,7 +57,7 @@ class TTLField(serializers.WritableField):
         if obj:
             try:
                 lock = models.Lock.objects.filter(claim=obj).get()
-                lock.expiration_time = datetime.timedelta(seconds=obj.timeout)
+                lock.expiration_time = obj.timeout
                 lock.save()
             except models.Lock.DoesNotExist:
                 pass
@@ -51,7 +74,7 @@ class TTLField(serializers.WritableField):
 
 
 class ClaimSerializer(serializers.HyperlinkedModelSerializer):
-    current_status = serializers.Field('current_status')
+    current_status = CurrentStatusField(required=False)
     metadata = serializers.WritableField()
     resource = serializers.CharField()
     status_history = StatusHistorySerializer(many=True, read_only=True)

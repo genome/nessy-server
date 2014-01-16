@@ -10,6 +10,7 @@ from . import transactions
 
 
 class ClaimViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin,
+        mixins.UpdateModelMixin,
         viewsets.GenericViewSet):
     queryset = models.Claim.objects.all()
     serializer_class = serializers.ClaimSerializer
@@ -32,15 +33,6 @@ class ClaimViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin,
         else:
             return Response(request_serializer.errors,
                     status=status.HTTP_400_BAD_REQUEST)
-
-    def update(self, request, pk=None):
-        pass
-
-    def partial_update(self, request, pk=None):
-        pass
-
-    def destroy(self, request, pk=None):
-        pass
 
 
 def _make_post_response(request, claim, status):

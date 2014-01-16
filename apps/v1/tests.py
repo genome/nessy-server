@@ -21,6 +21,9 @@ class ClaimTest(APITestCase):
         return self.client.post(reverse('claim-list'), self.claim_data,
                 format='json')
 
+    def patch(self, url, **kwargs):
+        return self.client.patch(url, kwargs, format='json')
+
     def test_post_claim_without_contention_should_return_201(self):
         response = self.post()
         self.assertEqual(status.HTTP_201_CREATED, response.status_code)
@@ -48,10 +51,43 @@ class ClaimTest(APITestCase):
         self.assertGreater(post_response.data['ttl'],
                 self.claim_data['timeout'] - 0.002)
 
+    def test_patch_status_from_active_to_released_should_return_200(self):
+        create_response = self.post()
+        release_response = self.patch(create_response['Location'],
+                current_status='released')
+        self.assertEqual(status.HTTP_200_OK, release_response.status_code)
+
+    def test_patch_status_from_active_to_released_should_release_lock(self):
+        create_response_1 = self.post()
+        release_response = self.patch(create_response_1['Location'],
+                current_status='released')
+        create_response_2 = self.post()
+        self.assertEqual('active', create_response_2.data['current_status'])
+
     def test_claim_with_contention_should_wait(self):
         response_1 = self.post()
         response_2 = self.post()
         self.assertEqual('waiting', response_2.data['current_status'])
+
+    def test_activate_waiting_lock_after_release_should_return_200(self):
+        create_response_1 = self.post()
+        create_response_2 = self.post()
+        release_response_1 = self.patch(create_response_1['Location'],
+                current_status='released')
+
+        activate_response_2 = self.patch(create_response_1['Location'],
+                current_status='active')
+        self.assertEqual(status.HTTP_200_OK, activate_response_2.status_code)
+
+    def test_activate_waiting_lock_after_release_should_become_active(self):
+        create_response_1 = self.post()
+        create_response_2 = self.post()
+        release_response_1 = self.patch(create_response_1['Location'],
+                current_status='released')
+
+        activate_response_2 = self.patch(create_response_1['Location'],
+                current_status='active')
+        self.assertEqual('active', activate_response_2.data['current_status'])
 
 
 if __name__ == '__main__':

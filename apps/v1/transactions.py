@@ -17,3 +17,9 @@ def insert_lock(claim):
     claim.status_history.create(type=models.STATUS_ACTIVE)
 
     return lock
+
+@transaction.atomic
+def release_lock(claim):
+    lock = claim.lock.get()
+    lock.delete()
+    claim.status_history.create(type=models.STATUS_RELEASED)

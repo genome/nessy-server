@@ -16,6 +16,8 @@ class ClaimTest(APITestCase):
             },
         }
 
+    def get(self, url):
+        return self.client.get(url, format='json')
 
     def post(self):
         return self.client.post(reverse('claim-list'), self.claim_data,
@@ -88,6 +90,30 @@ class ClaimTest(APITestCase):
         activate_response_2 = self.patch(create_response_1['Location'],
                 current_status='active')
         self.assertEqual('active', activate_response_2.data['current_status'])
+
+    def test_activate_while_not_next_in_line_should_return_409(self):
+        create_response_1 = self.post()
+        create_response_2 = self.post()
+        create_response_3 = self.post()
+        release_response_1 = self.patch(create_response_1['Location'],
+                current_status='released')
+
+        activate_response_3 = self.patch(create_response_3['Location'],
+                current_status='active')
+        self.assertEqual(status.HTTP_409_CONFLICT,
+                activate_response_3.status_code)
+
+    def test_activate_while_not_next_in_line_should_keep_waiting(self):
+        create_response_1 = self.post()
+        create_response_2 = self.post()
+        create_response_3 = self.post()
+        release_response_1 = self.patch(create_response_1['Location'],
+                current_status='released')
+
+        activate_response_3 = self.patch(create_response_3['Location'],
+                current_status='active')
+        status_response_3 = self.get(create_response_3['Location'])
+        self.assertEqual('waiting', status_response_3.data['current_status'])
 
 
 if __name__ == '__main__':

@@ -1,3 +1,4 @@
+from . import exceptions
 from . import models
 from . import transactions
 from django.db import IntegrityError
@@ -29,10 +30,9 @@ class CurrentStatusField(serializers.WritableField):
         if claim is not None:
             desired_status = data['current_status']
             if desired_status == 'active':
-                try:
-                    transactions.insert_lock(claim)
-                except IntegrityError:
-                    pass
+                transactions.promote_lock(claim.resource)
+                if claim.current_status() != 'active':
+                    raise exceptions.LockContention()
 
             elif desired_status == 'released':
                 try:

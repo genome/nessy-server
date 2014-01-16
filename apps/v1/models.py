@@ -1,4 +1,5 @@
 from django.db import connection, models, transaction
+from django.utils import timezone
 
 import datetime
 import dateutil.parser
@@ -21,19 +22,8 @@ STATUS_CHOICES = (
 )
 
 
-class AutoNowDateTimeField(models.DateTimeField):
-    def pre_save(self, model_instance, add):
-        return get_canonical_time()
-
-
-class AutoNowPlusDateTimeField(models.DateTimeField):
-    def pre_save(self, model_instance, add):
-        now = get_canonical_time()
-        return now + getattr(model_instance, self.attname, 0)
-
-
 class Claim(models.Model):
-    creation_time = AutoNowDateTimeField(db_index=True)
+    creation_time = models.DateTimeField(auto_now=True, db_index=True)
 
     resource =  models.TextField(db_index=True)
     timeout = timedelta.fields.TimedeltaField()
@@ -48,7 +38,11 @@ class Claim(models.Model):
     def refresh(self):
         return Claim.objects.all().get(id=self.id)
 
-    @transaction.atomic
+    @property
+    def is_active(self):
+        return self.current_status == STATUS_ACTIVE
+
+
     def update_status(self, new_status):
         self.current_status = new_status
         self.save()
@@ -57,7 +51,7 @@ class Claim(models.Model):
 
 class ClaimStatus(models.Model):
     type = models.IntegerField(choices=STATUS_CHOICES)
-    timestamp = AutoNowDateTimeField(db_index=True)
+    timestamp = models.DateTimeField(auto_now=True, db_index=True)
     claim = models.ForeignKey(Claim, related_name='status_history')
 
     class Meta:
@@ -68,22 +62,17 @@ class Lock(models.Model):
     resource =  models.TextField(unique=True)
     claim = models.ForeignKey(Claim, related_name='lock')
 
-    activation_time = AutoNowDateTimeField(db_index=True)
-    expiration_time = AutoNowPlusDateTimeField(db_index=True)
-    expiration_update_time = AutoNowDateTimeField(db_index=True)
+    activation_time = models.DateTimeField(auto_now=True, db_index=True)
+    expiration_time = models.DateTimeField(db_index=True)
+    expiration_update_time = models.DateTimeField(auto_now=True, db_index=True)
 
     class Meta:
         ordering = ['expiration_time']
 
     def ttl(self):
-        return self.expiration_time - get_canonical_time()
+        return self.expiration_time - get_now_as_tz()
 
 
-def get_canonical_time():
-    cursor = connection.cursor()
-    result = cursor.execute('select current_timestamp')
-    rows = result.fetchall()
-    now = dateutil.parser.parse(rows[0][0])
-    if now.tzinfo is None:
-        now = now.replace(tzinfo=pytz.timezone('UTC'))
-    return now
+def get_now_as_tz():
+    now = datetime.datetime.now()
+    return timezone.make_aware(now, timezone.get_default_timezone())

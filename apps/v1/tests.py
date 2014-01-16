@@ -1,6 +1,8 @@
 from django.core.urlresolvers import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
+
+import time
 import unittest
 
 
@@ -51,7 +53,7 @@ class ClaimTest(APITestCase):
         post_response = self.post()
         get_response = self.client.get(post_response['Location'])
         self.assertGreater(post_response.data['ttl'],
-                self.claim_data['timeout'] - 0.002)
+                self.claim_data['timeout'] - 0.005)
 
     def test_patch_status_from_active_to_released_should_return_200(self):
         create_response = self.post()
@@ -129,6 +131,13 @@ class ClaimTest(APITestCase):
                 current_status='active')
         status_response_3 = self.get(create_response_3['Location'])
         self.assertEqual('waiting', status_response_3.data['current_status'])
+
+    def test_active_lock_expires_after_timeout(self):
+        create_response = self.post()
+        time.sleep(self.claim_data['timeout'])
+
+        status_response = self.get(create_response['Location'])
+        self.assertLess(status_response.data['ttl'], 0)
 
 
 if __name__ == '__main__':

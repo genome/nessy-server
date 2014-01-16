@@ -1,59 +1,42 @@
 from . import models
 from django.db import IntegrityError, transaction
+import datetime
 
 
-@transaction.atomic
-def insert_new_claim(claim):
-    claim.update_status(models.STATUS_WAITING)
-
-    return claim
-
-def promote_claim(claim):
+def update_resource_status(resource):
     try:
-        result_claim = promote_lock(claim.resource)
-        return claim == result_claim
-    except IntegrityError:
-        return False
-
-def promote_lock(resource):
-#    now = models.get_canonical_time()
-#    _expire_lock(resource, now)
-    try:
-        return _promote_lock(resource)
+        _expire_lock_for_resource_if_timed_out(resource)
     except IntegrityError:
         pass
 
-@transaction.atomic
-def _promote_lock(resource):
-    claim = models.Claim.objects.filter(resource=resource,
-            current_status=models.STATUS_WAITING).earliest('creation_time')
-    if claim.current_status == models.STATUS_WAITING:
-        insert_lock(claim)
-    return claim
+    _promote_lock_for_resource(resource)
 
-@transaction.atomic
-def _expire_lock(resource, now):
+def _expire_lock_for_resource_if_timed_out(resource):
     try:
-        lock = models.Lock.objects.filter(resource=resource,
-                expiration_time__lt=now).get()
-        claim = lock.claim
-        lock.delete()
-        claim.update_status(models.STATUS_EXPIRED)
+        lock = models.Lock.objects.get(resource=resource)
+        if lock.ttl().total_seconds() < 0:
+            claim = lock.claim
+            claim.update_status(models.STATUS_EXPIRED)
+            lock.delete()
+            lock.save()
 
     except models.Lock.DoesNotExist:
         pass
 
-@transaction.atomic
-def insert_lock(claim):
-    lock = models.Lock(resource=claim.resource, claim=claim,
-            expiration_time=claim.timeout)
-    lock.save()
+def _promote_lock_for_resource(resource):
+    try:
+        claim = models.Claim.objects.filter(resource=resource,
+                current_status=models.STATUS_WAITING).earliest('creation_time')
+    except models.Claim.DoesNotExist:
+        return
+
+    expiration_time = models.get_now_as_tz() + claim.timeout
+    lock = models.Lock.objects.create(resource=claim.resource, claim=claim,
+            expiration_time=expiration_time)
     claim.update_status(models.STATUS_ACTIVE)
 
-    return lock
 
-@transaction.atomic
-def release_lock(claim):
+def release_claim(claim):
     lock = claim.lock.get()
     lock.delete()
     claim.update_status(models.STATUS_RELEASED)

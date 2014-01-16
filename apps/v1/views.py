@@ -2,41 +2,81 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import generics, mixins, status, viewsets
 from rest_framework.reverse import reverse
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 
+from . import exceptions
 from . import models
 from . import serializers
 from . import transactions
 
 
 class ClaimViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin,
-        mixins.UpdateModelMixin,
         viewsets.GenericViewSet):
     queryset = models.Claim.objects.all()
     serializer_class = serializers.ClaimSerializer
 
     def create(self, request):
-        request_serializer = serializers.ClaimSerializer(data=request.DATA)
-        if request_serializer.is_valid():
-            claim = request_serializer.object
-            transactions.insert_new_claim(claim)
+        claim = extract_claim(request)
+        claim.update_status(models.STATUS_WAITING)
 
-            if transactions.promote_claim(claim):
-                return _make_post_response(request, claim.refresh(),
-                        status=status.HTTP_201_CREATED)
+        try:
+            with transaction.atomic():
+                transactions.update_resource_status(claim.resource)
+            return _make_post_response(request, claim.refresh(),
+                    status=status.HTTP_201_CREATED)
 
-            else:
-                return _make_post_response(request, claim,
-                        status=status.HTTP_202_ACCEPTED)
+        except IntegrityError:
+            return _make_post_response(request, claim,
+                    status=status.HTTP_202_ACCEPTED)
+
+    def update(self, request, pk=None, partial=False):
+        try:
+            claim = models.Claim.objects.get(id=pk)
+        except models.Claim.DoesNotExist:
+            return Response('No such claim (%s)' % pk,
+                    status=status.HTTP_404_NOT_FOUND)
+        serializer = serializers.ClaimSerializer(claim, data=request.DATA,
+                partial=partial)
+        if serializer.is_valid():
+            try:
+                with transaction.atomic():
+                    transactions.update_resource_status(claim.resource)
+                    result_object = serializer.save()
+
+            except IntegrityError:
+                raise exceptions.LockContention('Bad times')
+
+            return Response(serializer.data)
 
         else:
-            return Response(request_serializer.errors,
+            return Response(serializer.errors,
                     status=status.HTTP_400_BAD_REQUEST)
 
+    def partial_update(self, request, pk=None):
+        return self.update(request, pk=pk, partial=True)
+
+
+
+def extract_claim(request, pk=None):
+    if pk is not None:
+        claim = models.Claim.objects.get(id=pk)
+        serializer = serializers.ClaimSerializer(claim, data=request.DATA)
+    else:
+        serializer = serializers.ClaimSerializer(data=request.DATA)
+
+    if serializer.is_valid():
+        claim = serializer.object
+        return claim
+    else:
+        raise exceptions.InvalidRequest(request_serializer.errors)
+
+
+def _make_update_response(request, claim, status):
+    serializer = serializers.ClaimSerializer(claim)
+    return Response(serializer.data, status=status)
 
 def _make_post_response(request, claim, status):
-    serializer = serializers.ClaimSerializer(claim)
-    response = Response(serializer.data, status=status)
+    response = _make_update_response(request, claim, status)
     response['Location'] = reverse('claim-detail', kwargs={'pk': claim.id},
             request=request)
     return response

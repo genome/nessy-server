@@ -2,6 +2,7 @@ from . import exceptions
 from . import models
 from . import transactions
 from django.db import IntegrityError
+from django.utils import timezone
 from rest_framework import serializers
 
 import datetime
@@ -30,15 +31,11 @@ class CurrentStatusField(serializers.WritableField):
         if claim is not None:
             desired_status = data['current_status']
             if desired_status == 'active':
-                if not transactions.promote_claim(claim):
-                    raise exceptions.LockContention(
-                            'Could not promote lock.  Try again later.')
-                else:
-                    into['current_status'] = models.STATUS_ACTIVE
+                into['current_status'] = models.STATUS_ACTIVE
 
             elif desired_status == 'released':
                 try:
-                    transactions.release_lock(claim)
+                    transactions.release_claim(claim)
                     into['current_status'] = models.STATUS_RELEASED
                 except models.Lock.DoesNotExist:
                     # XXX a real exception here is appropriate
@@ -57,14 +54,19 @@ class StatusHistorySerializer(serializers.ModelSerializer):
 
 class TTLField(serializers.WritableField):
     def field_from_native(self, data, files, field_name, into):
-        claim = self.parent.object
-        if claim:
-            try:
-                # XXX Race here, catch db exception and raise API exception
-                lock = models.Lock.objects.filter(claim=claim).get()
-                into['expiration_time'] = claim.timeout
-            except models.Lock.DoesNotExist:
-                pass
+        if field_name in data:
+            claim = self.parent.object
+            if claim:
+                try:
+                    lock = models.Lock.objects.filter(claim=claim).get()
+                    now = get_now_as_tz()
+                    lock.expiration_time = datetime.timedelta(
+                            seconds=data[field_name]) + now
+                    lock.expiration_update_time = now
+                    lock.save()
+                except models.Lock.DoesNotExist:
+                    raise exceptions.LockContention(
+                            'Cannot update TTL for unowned lock')
 
     def field_to_native(self, claim, field_name):
         if claim:
@@ -101,3 +103,7 @@ class ClaimSerializer(serializers.HyperlinkedModelSerializer):
         if attrs[source].total_seconds() < 0:
             raise serializers.ValidationError('timeout cannot be negative')
         return attrs
+
+def get_now_as_tz():
+    now = datetime.datetime.now()
+    return timezone.make_aware(now, timezone.get_default_timezone())

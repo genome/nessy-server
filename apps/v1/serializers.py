@@ -57,20 +57,19 @@ class StatusHistorySerializer(serializers.ModelSerializer):
 
 class TTLField(serializers.WritableField):
     def field_from_native(self, data, files, field_name, into):
-        obj = self.parent.object
-        if obj:
+        claim = self.parent.object
+        if claim:
             try:
                 # XXX Race here, catch db exception and raise API exception
-                lock = models.Lock.objects.filter(claim=obj).get()
-                lock.expiration_time = obj.timeout
-                lock.save()
+                lock = models.Lock.objects.filter(claim=claim).get()
+                into['expiration_time'] = claim.timeout
             except models.Lock.DoesNotExist:
                 pass
 
-    def field_to_native(self, obj, field_name):
-        if obj:
+    def field_to_native(self, claim, field_name):
+        if claim:
             try:
-                lock = models.Lock.objects.filter(claim=obj).get()
+                lock = models.Lock.objects.filter(claim=claim).get()
                 return lock.ttl().total_seconds()
             except models.Lock.DoesNotExist:
                 pass

@@ -8,11 +8,11 @@ import timedelta
 
 class AutoNowDateTimeField(models.DateTimeField):
     def pre_save(self, model_instance, add):
-        return _get_cannonical_time()
+        return get_canonical_time()
 
 class AutoNowPlusDateTimeField(models.DateTimeField):
     def pre_save(self, model_instance, add):
-        now = _get_cannonical_time()
+        now = get_canonical_time()
         return now + getattr(model_instance, self.attname, 0)
 
 class Claim(models.Model):
@@ -66,10 +66,10 @@ class Lock(models.Model):
         ordering = ['expiration_time']
 
     def ttl(self):
-        return self.expiration_time - _get_cannonical_time()
+        return self.expiration_time - get_canonical_time()
 
 
-def _get_cannonical_time():
+def get_canonical_time():
     cursor = connection.cursor()
     result = cursor.execute('select current_timestamp')
     rows = result.fetchall()

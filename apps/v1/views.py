@@ -52,6 +52,7 @@ def _insert_new_claim(claim):
 def _insert_lock(claim):
     lock = models.Lock(resource=claim.resource, claim=claim,
             expiration_time=claim.timeout)
+    lock.save()
     claim.status_history.create(type=models.STATUS_ACTIVE)
 
     return lock

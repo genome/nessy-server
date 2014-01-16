@@ -4,7 +4,7 @@ from rest_framework.test import APITestCase
 import unittest
 
 
-class NoContentionTest(APITestCase):
+class ClaimTest(APITestCase):
     def setUp(self):
         APITestCase.setUp(self)
         self.claim_data = {
@@ -33,11 +33,14 @@ class NoContentionTest(APITestCase):
         response = self.post()
         self.assertEqual(self.claim_data['metadata'], response.data['metadata'])
 
-
     def test_claim_without_contention_should_immediately_activate(self):
         response = self.post()
         self.assertEqual('active', response.data['current_status'])
 
+    def test_claim_with_contention_should_wait(self):
+        response_1 = self.post()
+        response_2 = self.post()
+        self.assertEqual('waiting', response_2.data['current_status'])
 
 
 if __name__ == '__main__':

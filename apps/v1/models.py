@@ -39,18 +39,11 @@ STATUS_WAITING   = 0
 STATUS_ACTIVE    = 2
 STATUS_RELEASED  = 4
 STATUS_ABANDONED = 6
-STATUS_LOOKUP = {
-    STATUS_WAITING:   'waiting',
-    STATUS_ACTIVE:    'active',
-    STATUS_RELEASED:  'released',
-    STATUS_ABANDONED: 'abandoned',
-}
-
 STATUS_CHOICES = (
-    (STATUS_WAITING,   STATUS_LOOKUP[STATUS_WAITING]),
-    (STATUS_ACTIVE,    STATUS_LOOKUP[STATUS_ACTIVE]),
-    (STATUS_RELEASED,  STATUS_LOOKUP[STATUS_RELEASED]),
-    (STATUS_ABANDONED, STATUS_LOOKUP[STATUS_ABANDONED]),
+    (STATUS_WAITING,   'waiting'),
+    (STATUS_ACTIVE,    'active'),
+    (STATUS_RELEASED,  'released'),
+    (STATUS_ABANDONED, 'abandoned'),
 )
 class ClaimStatus(models.Model):
     type = models.IntegerField(choices=STATUS_CHOICES)

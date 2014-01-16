@@ -6,9 +6,17 @@ import json_field
 import pytz
 import timedelta
 
+class AutoNowDateTimeField(models.DateTimeField):
+    def pre_save(self, model_instance, add):
+        return _get_cannonical_time()
+
+class AutoNowPlusDateTimeField(models.DateTimeField):
+    def pre_save(self, model_instance, add):
+        now = _get_cannonical_time()
+        return now + getattr(model_instance, self.attname, 0)
 
 class Claim(models.Model):
-    creation_time = models.DateTimeField(auto_now=True)
+    creation_time = AutoNowDateTimeField(db_index=True)
 
     resource =  models.TextField(db_index=True)
     timeout = timedelta.fields.TimedeltaField()
@@ -38,7 +46,7 @@ STATUS_CHOICES = (
 )
 class ClaimStatus(models.Model):
     type = models.IntegerField(choices=STATUS_CHOICES)
-    timestamp = models.DateTimeField(auto_now=True, db_index=True)
+    timestamp = AutoNowDateTimeField(db_index=True)
     claim = models.ForeignKey(Claim, related_name='status_history')
 
     class Meta:
@@ -49,19 +57,22 @@ class Lock(models.Model):
     resource =  models.TextField(unique=True)
     claim = models.ForeignKey(Claim, related_name='lock')
 
-    activation_time = models.DateTimeField(auto_now=True, db_index=True)
-    expiration_time = models.DateTimeField(auto_now_add=True, db_index=True)
-    expiration_update_time = models.DateTimeField(auto_now_add=True,
-            db_index=True)
+    activation_time = AutoNowDateTimeField(db_index=True)
+    expiration_time = AutoNowPlusDateTimeField(db_index=True)
+    expiration_update_time = AutoNowDateTimeField(db_index=True)
 
     class Meta:
         ordering = ['expiration_time']
 
     def ttl(self):
-        cursor = connection.cursor()
-        result = cursor.execute('select current_timestamp')
-        rows = result.fetchall()
-        now = dateutil.parser.parse(rows[0][0])
-        if now.tzinfo is None:
-            now = now.replace(tzinfo=pytz.timezone('UTC'))
-        return self.expiration_time - now
+        return self.expiration_time - _get_cannonical_time()
+
+
+def _get_cannonical_time():
+    cursor = connection.cursor()
+    result = cursor.execute('select current_timestamp')
+    rows = result.fetchall()
+    now = dateutil.parser.parse(rows[0][0])
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=pytz.timezone('UTC'))
+    return now

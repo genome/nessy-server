@@ -2,10 +2,11 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import generics, mixins, status, viewsets
 from rest_framework.reverse import reverse
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError
 
 from . import models
 from . import serializers
+from . import transactions
 
 
 class ClaimViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin,
@@ -17,10 +18,10 @@ class ClaimViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin,
         request_serializer = serializers.ClaimSerializer(data=request.DATA)
         if request_serializer.is_valid():
             claim = request_serializer.object
-            _insert_new_claim(claim)
+            transactions.insert_new_claim(claim)
 
             try:
-                _insert_lock(claim)
+                transactions.insert_lock(claim)
                 return _make_post_response(request, claim,
                         status=status.HTTP_201_CREATED)
 
@@ -41,21 +42,6 @@ class ClaimViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin,
     def destroy(self, request, pk=None):
         pass
 
-@transaction.atomic
-def _insert_new_claim(claim):
-    claim.save()
-    claim.status_history.create(type=models.STATUS_WAITING)
-
-    return claim
-
-@transaction.atomic
-def _insert_lock(claim):
-    lock = models.Lock(resource=claim.resource, claim=claim,
-            expiration_time=claim.timeout)
-    lock.save()
-    claim.status_history.create(type=models.STATUS_ACTIVE)
-
-    return lock
 
 def _make_post_response(request, claim, status):
     serializer = serializers.ClaimSerializer(claim)

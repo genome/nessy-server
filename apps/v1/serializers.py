@@ -27,19 +27,20 @@ class TimeDeltaField(serializers.FloatField):
 
 class CurrentStatusField(serializers.WritableField):
     def field_from_native(self, data, files, field_name, into):
-        claim = self.parent.object
-        if claim is not None:
-            desired_status = data['current_status']
-            if desired_status == 'active':
-                into['current_status'] = models.STATUS_ACTIVE
+        if field_name in data:
+            claim = self.parent.object
+            if claim is not None:
+                desired_status = data['current_status']
+                if desired_status == 'active':
+                    into['current_status'] = models.STATUS_ACTIVE
 
-            elif desired_status == 'released':
-                try:
-                    transactions.release_claim(claim)
-                    into['current_status'] = models.STATUS_RELEASED
-                except models.Lock.DoesNotExist:
-                    # XXX a real exception here is appropriate
-                    pass
+                elif desired_status == 'released':
+                    try:
+                        transactions.release_claim(claim)
+                        into['current_status'] = models.STATUS_RELEASED
+                    except models.Lock.DoesNotExist:
+                        # XXX a real exception here is appropriate
+                        pass
 
     def field_to_native(self, obj, field_name):
         return obj.get_current_status_display()

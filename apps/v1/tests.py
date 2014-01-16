@@ -132,12 +132,22 @@ class ClaimTest(APITestCase):
         status_response_3 = self.get(create_response_3['Location'])
         self.assertEqual('waiting', status_response_3.data['current_status'])
 
-    def test_active_lock_expires_after_timeout(self):
+    def test_expired_lock_should_have_negative_ttl(self):
         create_response = self.post()
         time.sleep(self.claim_data['timeout'])
 
         status_response = self.get(create_response['Location'])
         self.assertLess(status_response.data['ttl'], 0)
+
+    def test_patch_ttl_should_return_200(self):
+        create_response = self.post()
+        update_response = self.patch(create_response['Location'], ttl=100)
+        self.assertEqual(status.HTTP_200_OK, update_response.status_code)
+
+    def test_patch_ttl_should_update_ttl(self):
+        create_response = self.post()
+        update_response = self.patch(create_response['Location'], ttl=100)
+        self.assertGreater(update_response.data['ttl'], 50)
 
 
 if __name__ == '__main__':

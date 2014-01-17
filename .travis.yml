@@ -3,7 +3,7 @@ python: "2.7"
 
 env:
     global:
-        - DJANGO_SETTINGS_MODULE=gsc_lock.settings.production
+        - DJANGO_SETTINGS_MODULE=gsc_lock.settings.development
         - GSC_LOCK_SECRET_KEY=testing*secret*key
 
 install: pip install tox

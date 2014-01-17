@@ -38,7 +38,7 @@ class ClaimViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin,
             return Response('No such claim (%s)' % pk,
                     status=status.HTTP_404_NOT_FOUND)
         serializer = serializers.ClaimSerializer(claim, data=request.DATA,
-                partial=partial)
+                partial=partial, context={'request': request})
         if serializer.is_valid():
             try:
                 with transaction.atomic():
@@ -62,9 +62,11 @@ class ClaimViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin,
 def extract_claim(request, pk=None):
     if pk is not None:
         claim = models.Claim.objects.get(id=pk)
-        serializer = serializers.ClaimSerializer(claim, data=request.DATA)
+        serializer = serializers.ClaimSerializer(claim, data=request.DATA,
+                context={'request': request})
     else:
-        serializer = serializers.ClaimSerializer(data=request.DATA)
+        serializer = serializers.ClaimSerializer(data=request.DATA,
+                context={'request': request})
 
     if serializer.is_valid():
         claim = serializer.object
@@ -74,7 +76,8 @@ def extract_claim(request, pk=None):
 
 
 def _make_update_response(request, claim, status):
-    serializer = serializers.ClaimSerializer(claim)
+    serializer = serializers.ClaimSerializer(claim,
+            context={'request': request})
     return Response(serializer.data, status=status)
 
 def _make_post_response(request, claim, status):

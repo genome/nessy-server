@@ -2,8 +2,6 @@ django
 djangorestframework
 django-json-field
 django-timedeltafield
-hiredis
 python-dateutil
 pytz
-redis
 simplejson

@@ -67,6 +67,22 @@ class ClaimTest(APITestCase):
                 current_status='released')
         self.assertEqual(status.HTTP_200_OK, release_response.status_code)
 
+    def test_patch_status_from_released_to_released_should_return_200(self):
+        create_response = self.post()
+        release_response_1 = self.patch(create_response['Location'],
+                current_status='released')
+        release_response_2 = self.patch(create_response['Location'],
+                current_status='released')
+        self.assertEqual(status.HTTP_200_OK, release_response_2.status_code)
+
+    def test_patch_status_from_waiting_to_released_should_return_400(self):
+        create_response_1 = self.post()
+        create_response_2 = self.post()
+        release_response_2 = self.patch(create_response_2['Location'],
+                current_status='released')
+        self.assertEqual(status.HTTP_400_BAD_REQUEST,
+                release_response_2.status_code)
+
     def test_patch_status_from_active_to_released_should_set_released(self):
         create_response_1 = self.post()
         release_response = self.patch(create_response_1['Location'],
@@ -87,7 +103,9 @@ class ClaimTest(APITestCase):
         release_response = self.patch(create_response_1['Location'],
                 current_status='released')
         create_response_3 = self.post()
-        self.assertEqual(status.HTTP_202_ACCEPTED, create_response_3.status_code)
+        self.assertEqual(status.HTTP_202_ACCEPTED,
+                create_response_3.status_code)
+
 
     def test_claim_with_contention_should_wait(self):
         response_1 = self.post()

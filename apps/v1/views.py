@@ -72,7 +72,7 @@ def extract_claim(request, pk=None):
         claim = serializer.object
         return claim
     else:
-        raise exceptions.InvalidRequest(request_serializer.errors)
+        raise exceptions.InvalidRequest(serializer.errors)
 
 
 def _make_update_response(request, claim, status):

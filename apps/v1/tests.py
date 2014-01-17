@@ -40,6 +40,12 @@ class ClaimTest(APITestCase):
         response = self.post()
         self.assertEqual(self.claim_data['metadata'], response.data['metadata'])
 
+    def test_post_claim_with_short_resource_name_should_return_400(self):
+        self.claim_data['resource'] = ''
+        response = self.post()
+        self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
+
+
     def test_claim_without_contention_should_immediately_activate(self):
         response = self.post()
         self.assertEqual('active', response.data['current_status'])

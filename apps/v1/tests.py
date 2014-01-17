@@ -53,7 +53,7 @@ class ClaimTest(APITestCase):
         post_response = self.post()
         get_response = self.client.get(post_response['Location'])
         self.assertGreater(post_response.data['ttl'],
-                self.claim_data['timeout'] - 0.005)
+                self.claim_data['timeout'] - 0.015)
 
     def test_patch_status_from_active_to_released_should_return_200(self):
         create_response = self.post()

@@ -45,7 +45,8 @@ class CurrentStatusField(serializers.WritableField):
                         pass
 
     def field_to_native(self, obj, field_name):
-        return obj.get_current_status_display()
+        if obj is not None:
+            return obj.get_current_status_display()
 
 
 class StatusHistorySerializer(serializers.ModelSerializer):

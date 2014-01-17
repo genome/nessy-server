@@ -58,13 +58,13 @@ class ClaimTest(APITestCase):
     def test_get_active_lock_should_return_ttl(self):
         post_response = self.post()
         get_response = self.client.get(post_response['Location'])
-        self.assertGreater(post_response.data['ttl'], 0)
+        self.assertGreater(get_response.data['ttl'], 0)
 
     def test_inital_ttl_should_be_close_to_timeout(self):
         post_response = self.post()
         get_response = self.client.get(post_response['Location'])
-        self.assertGreater(post_response.data['ttl'],
-                self.claim_data['timeout'] - 0.015)
+        self.assertGreater(get_response.data['ttl'],
+                self.claim_data['timeout'] - 0.020)
 
     def test_patch_status_from_active_to_released_should_return_200(self):
         create_response = self.post()

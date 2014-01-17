@@ -177,15 +177,35 @@ class ClaimTest(APITestCase):
         status_response = self.get(create_response['Location'])
         self.assertLess(status_response.data['ttl'], 0)
 
-    def test_patch_ttl_should_return_200(self):
+    def test_patch_ttl_for_active_claim_should_return_200(self):
         create_response = self.post()
         update_response = self.patch(create_response['Location'], ttl=100)
         self.assertEqual(status.HTTP_200_OK, update_response.status_code)
 
-    def test_patch_ttl_should_update_ttl(self):
+    def test_patch_ttl_for_active_claim_should_update_ttl(self):
         create_response = self.post()
         update_response = self.patch(create_response['Location'], ttl=100)
         self.assertGreater(update_response.data['ttl'], 50)
+
+    def test_patch_ttl_for_released_claim_should_return_409(self):
+        create_response = self.post()
+        release_response = self.patch(create_response['Location'],
+                current_status='released')
+        update_response = self.patch(create_response['Location'], ttl=100)
+        self.assertEqual(status.HTTP_409_CONFLICT, update_response.status_code)
+
+    def test_patch_ttl_for_expired_claim_should_return_409(self):
+        create_response = self.post()
+        time.sleep(self.claim_data['timeout'])
+        update_response = self.patch(create_response['Location'], ttl=100)
+        self.assertEqual(status.HTTP_409_CONFLICT, update_response.status_code)
+
+    def test_patch_ttl_for_waiting_claim_should_return_409(self):
+        create_response_1 = self.post()
+        create_response_2 = self.post()
+        update_response_2 = self.patch(create_response_2['Location'], ttl=100)
+        self.assertEqual(status.HTTP_409_CONFLICT,
+                update_response_2.status_code)
 
 
 if __name__ == '__main__':

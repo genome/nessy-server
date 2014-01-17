@@ -37,19 +37,22 @@ class ClaimViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin,
         except models.Claim.DoesNotExist:
             return Response('No such claim (%s)' % pk,
                     status=status.HTTP_404_NOT_FOUND)
-        serializer = serializers.ClaimSerializer(claim, data=request.DATA,
-                partial=partial, context={'request': request})
+
+        try:
+            with transaction.atomic():
+                transactions.update_resource_status(claim.resource)
+
+        except IntegrityError:
+            raise exceptions.LockContention('Bad times')
+
+        serializer = serializers.ClaimSerializer(claim.refresh(),
+                data=request.DATA, partial=partial,
+                context={'request': request})
 
         if serializer.is_valid():
-            try:
-                with transaction.atomic():
-                    transactions.update_resource_status(claim.resource)
-                # XXX Is doing serializer.save outside the transaction a race?
-                # maybe if we're trying to abandon a claim and it gets promoted?
-                result_object = serializer.save()
-
-            except IntegrityError:
-                raise exceptions.LockContention('Bad times')
+            # XXX Is doing serializer.save outside the transaction a race?
+            # maybe if we're trying to abandon a claim and it gets promoted?
+            result_object = serializer.save()
 
             return Response(serializer.data)
 

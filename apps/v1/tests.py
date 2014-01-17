@@ -83,6 +83,13 @@ class ClaimTest(APITestCase):
         self.assertEqual(status.HTTP_400_BAD_REQUEST,
                 release_response_2.status_code)
 
+    def test_patch_status_from_expired_to_released_should_return_409(self):
+        create_response = self.post()
+        time.sleep(self.claim_data['timeout'])
+        release_response = self.patch(create_response['Location'],
+                current_status='released')
+        self.assertEqual(status.HTTP_409_CONFLICT, release_response.status_code)
+
     def test_patch_status_from_active_to_released_should_set_released(self):
         create_response_1 = self.post()
         release_response = self.patch(create_response_1['Location'],

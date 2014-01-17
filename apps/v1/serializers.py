@@ -44,8 +44,14 @@ class CurrentStatusField(serializers.WritableField):
                         except models.Lock.DoesNotExist:
                             # XXX a real exception here is appropriate
                             pass
+
+                    elif claim.current_status == models.STATUS_EXPIRED:
+                        raise exceptions.LockContention(
+                            "Cannot release expired claim")
+
                     elif claim.current_status == models.STATUS_RELEASED:
                         pass
+
                     else:
                         raise exceptions.InvalidRequest(
                             "Cannot release claim with status '%s'" %

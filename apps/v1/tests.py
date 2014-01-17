@@ -45,10 +45,15 @@ class ClaimTest(APITestCase):
         response = self.post()
         self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
 
-
     def test_claim_without_contention_should_immediately_activate(self):
         response = self.post()
         self.assertEqual('active', response.data['current_status'])
+
+    def test_different_resource_claims_should_immediate_succeed(self):
+        response_1 = self.post()
+        self.claim_data['resource'] = 'resource-bar'
+        response_2 = self.post()
+        self.assertEqual(status.HTTP_201_CREATED, response_2.status_code)
 
     def test_get_active_lock_should_return_ttl(self):
         post_response = self.post()

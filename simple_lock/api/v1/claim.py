@@ -1,3 +1,6 @@
+from . import exceptions
+from . import forms
+from flask import g, request
 import flask.views
 
 
@@ -15,6 +18,8 @@ class ClaimView(flask.views.MethodView):
         pass
 
     def post(self):
+        form = self._get_form(forms.ClaimCreateForm)
+
         return 'claim created', 201
 
     def put(self, claim_id):
@@ -22,3 +27,16 @@ class ClaimView(flask.views.MethodView):
 
     def patch(self, claim_id):
         pass
+
+    def _get_form(self, form_class):
+        form = form_class(request.form)
+
+        json_data = request.get_json()
+        if json_data is not None:
+            for k, v in json_data.iteritems():
+                form[k].data = v
+
+        if not form.validate():
+            raise exceptions.InvalidParameters(**form.errors)
+
+        return form

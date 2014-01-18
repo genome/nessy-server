@@ -1,5 +1,7 @@
 from ..base import APITest
 
+URL = '/v1/claims/'
+
 
 class ClaimListPostGeneralSuccessTest(APITest):
     pass
@@ -24,7 +26,7 @@ class ClaimListPostSuccessWithoutContentionTest(APITest):
             'resource': 'post-resource',
             'timeout': 0.010,
         }
-        self.response = self.client.post('/v1/claims/', self.post_data)
+        self.response = self.client.post(URL, data=self.post_data)
 
     def test_should_return_201(self):
         self.assertEqual(201, self.response.status_code)
@@ -50,11 +52,23 @@ class ClaimListPostSuccessWithContentionTest(APITest):
 #        pass
 
 class ClaimListPostErrorTest(APITest):
-    pass
+    def test_missing_mandatory_parameters_should_return_400(self):
+        no_params_response = self.client.post(URL, data={})
+        self.assertEqual(400, no_params_response.status_code)
+        self.assertIn('resource', no_params_response.data)
+        self.assertIn('timeout', no_params_response.data)
 
-# TODO
-#    def test_missing_mandatory_parameters_should_return_400(self):
-#        pass
+        no_resource_response = self.client.post(URL, data={
+            'timeout': 1.2,
+        })
+        self.assertEqual(400, no_resource_response.status_code)
+        self.assertIn('resource', no_resource_response.data)
+
+        no_timeout_response = self.client.post(URL, data={
+            'resource': 'foo',
+        })
+        self.assertEqual(400, no_timeout_response.status_code)
+        self.assertIn('timeout', no_timeout_response.data)
 
 # TODO
 #    def test_invalid_parameter_values_should_return_400(self):

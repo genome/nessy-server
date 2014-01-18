@@ -1,7 +1,8 @@
-from simple_lock.api import wsgi
+from simple_lock.api import application
 import unittest
 
 
 class APITest(unittest.TestCase):
     def setUp(self):
-        self.client = wsgi.app.test_client()
+        self.app = application.create_app('sqlite:///:memory:')
+        self.client = self.app.test_client()

@@ -1,9 +1,6 @@
-from . import v1
-import flask
+from . import application
 
-
-app = flask.Flask('Locking Service')
-app.register_blueprint(v1.blueprint, prefix='/v1')
+app = application.create_app('sqlite:///:memory:')
 
 
 if __name__ == '__main__':

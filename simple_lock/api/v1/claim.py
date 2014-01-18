@@ -29,12 +29,7 @@ class ClaimView(flask.views.MethodView):
         pass
 
     def _get_form(self, form_class):
-        form = form_class(request.form)
-
-        json_data = request.get_json()
-        if json_data is not None:
-            for k, v in json_data.iteritems():
-                form[k].data = v
+        form = form_class(request.form, data=request.get_json())
 
         if not form.validate():
             raise exceptions.InvalidParameters(**form.errors)

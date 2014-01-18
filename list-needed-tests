@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+script="import collections
+import re
+import sys
+
+_regex = re.compile(r'(?P<filename>.+)\-#    def test_(?P<test_name>.+)\(self\):')
+def _get_filename_and_test_name(line):
+    match = _regex.search(line)
+    return match.group('filename'), match.group('test_name')
+
+def main():
+    file_tests = collections.defaultdict(list)
+    for line in sys.stdin:
+        filename, test_name = _get_filename_and_test_name(line)
+        file_tests[filename].append(test_name)
+
+
+    for filename, test_names in file_tests.iteritems():
+        print '%s:' % filename
+        for test_name in test_names:
+            print '    %s' % test_name
+
+if __name__ == '__main__':
+    main()
+"
+
+tempfile=`mktemp`
+echo "$script" > $tempfile
+
+
+cd tests/api/v1
+grep -A1 TODO * | grep self | python $tempfile

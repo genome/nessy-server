@@ -15,7 +15,7 @@ class ClaimView(flask.views.MethodView):
         pass
 
     def post(self):
-        pass
+        return 'claim created', 201
 
     def put(self, claim_id):
         pass

@@ -18,11 +18,16 @@ class ClaimListPostGeneralSuccessTest(APITest):
 
 
 class ClaimListPostSuccessWithoutContentionTest(APITest):
-    pass
+    def setUp(self):
+        super(ClaimListPostSuccessWithoutContentionTest, self).setUp()
+        self.post_data = {
+            'resource': 'post-resource',
+            'timeout': 0.010,
+        }
+        self.response = self.client.post('/v1/claims/', self.post_data)
 
-# TODO
-#    def test_should_return_201(self):
-#        pass
+    def test_should_return_201(self):
+        self.assertEqual(201, self.response.status_code)
 
 # TODO
 #    def test_should_set_status_to_active(self):

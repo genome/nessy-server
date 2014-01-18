@@ -87,4 +87,10 @@ class ClaimListPostErrorTest(APITest):
 
 # TODO
 #    def test_unknown_parameters_should_return_400(self):
-#        pass
+#        unknown_param_response = self.client.post(URL, data={
+#            'resource': 'foo',
+#            'timeout': 1.2,
+#            'unknown_param': 'enigma',
+#        })
+#        self.assertEqual(400, unknown_param_response.status_code)
+#        self.assertIn('unknown_param', unknown_param_response.data)

@@ -31,3 +31,7 @@ def _attach_factory_to_app(factory, app):
     @app.before_request
     def before_request():
         flask.g.actor = factory.create_actor()
+
+    @app.teardown_request
+    def teardown_request(exception):
+        flask.g.actor.close()

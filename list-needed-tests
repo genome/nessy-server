@@ -20,6 +20,10 @@ def main():
         print '%s:' % filename
         for test_name in test_names:
             print '    %s' % test_name
+        print
+
+
+    print 'Remaining tests: %d' % sum(map(len, file_tests.itervalues()))
 
 if __name__ == '__main__':
     main()

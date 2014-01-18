@@ -23,7 +23,7 @@ def _create_factory(database_string):
 
 def _create_app_from_blueprints():
     app = flask.Flask('Locking Service')
-    app.register_blueprint(v1.blueprint, prefix='/v1')
+    app.register_blueprint(v1.blueprint, url_prefix='/v1')
 
     return app
 

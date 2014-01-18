@@ -70,9 +70,20 @@ class ClaimListPostErrorTest(APITest):
         self.assertEqual(400, no_timeout_response.status_code)
         self.assertIn('timeout', no_timeout_response.data)
 
-# TODO
-#    def test_invalid_parameter_values_should_return_400(self):
-#        pass
+    def test_invalid_parameter_values_should_return_400(self):
+        empty_resource_response = self.client.post(URL, data={
+            'resource': '',
+            'timeout': 1.2,
+        })
+        self.assertEqual(400, empty_resource_response.status_code)
+        self.assertIn('resource', empty_resource_response.data)
+
+        negative_timeout_response = self.client.post(URL, data={
+            'resource': 'foo',
+            'timeout': -1.2,
+        })
+        self.assertEqual(400, negative_timeout_response.status_code)
+        self.assertIn('timeout', negative_timeout_response.data)
 
 # TODO
 #    def test_unknown_parameters_should_return_400(self):

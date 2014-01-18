@@ -26,6 +26,9 @@ class Claim(Base):
     resource = Column(Text, index=True)
     timeout = Column(Interval, index=True)
 
+    # XXX Use a native JSON column for postgres
+    user_data = Column(Text)
+
     # XXX Is this column premature optimization?
     status = Column(Enum(*_VALID_STATUSES), index=True)
     lock = relationship('Lock', uselist=False, backref='claim')

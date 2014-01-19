@@ -13,7 +13,8 @@ class ClaimUpdateMixinBase(object):
         }
         self.changed_data = {}
 
-        self.post_response = self.client.post('/v1/claims/', self.post_data)
+        self.post_response = self.client.post('/v1/claims/',
+                data=self.post_data)
         self.resource_url = self.post_response.headers['Location']
 
     @abc.abstractproperty
@@ -26,7 +27,7 @@ class ClaimUpdateMixinBase(object):
 
     def update(self):
         method = getattr(self.client, self.method)
-        return method(self.resource_url, self.method_data())
+        return method(self.resource_url, data=self.method_data())
 
 
 class ClaimUpdateSuccessMixin(ClaimUpdateMixinBase):
@@ -85,15 +86,25 @@ class ClaimUpdateSuccessMixin(ClaimUpdateMixinBase):
 
 
 class ClaimUpdateErrorMixin(ClaimUpdateMixinBase):
-    pass
-
 # TODO
 #    def test_unknown_parameters_should_return_400(self):
 #        pass
 
-# TODO
-#    def test_invalid_parameters_should_return_400(self):
-#        pass
+    def test_invalid_parameters_should_return_400(self):
+        self.changed_data = { 'status': 'expired', }
+        expired_status_response = self.update()
+        self.assertEqual(400, expired_status_response.status_code)
+        self.assertIn('status', expired_status_response.data)
+
+        self.changed_data = { 'status': 'waiting', }
+        waiting_status_response = self.update()
+        self.assertEqual(400, waiting_status_response.status_code)
+        self.assertIn('status', waiting_status_response.data)
+
+        self.changed_data = { 'timeout': -1.7 }
+        timeout_response = self.update()
+        self.assertEqual(400, timeout_response.status_code)
+        self.assertIn('timeout', timeout_response.data)
 
 # TODO
 #    def test_non_existant_claim_should_return_404(self):
@@ -131,7 +142,10 @@ class ClaimDetailPutMixin(object):
     method = 'put'
 
     def method_data(self):
-        put_data = dict(self.post_data)
+        put_data = {
+            'timeout': 0.010,
+            'status': 'waiting',
+        }
         put_data.update(self.changed_data)
         return put_data
 

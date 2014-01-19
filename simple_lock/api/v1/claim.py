@@ -20,13 +20,20 @@ class ClaimView(flask.views.MethodView):
     def post(self):
         form = self._get_form(forms.ClaimCreateForm)
 
-        return 'claim created', 201
+        r = flask.make_response('claim created', 201)
+        r.headers['Location'] = '/v1/claims/42/'
+        return r
 
     def put(self, claim_id):
-        pass
+        return self._update(claim_id)
 
     def patch(self, claim_id):
-        pass
+        return self._update(claim_id)
+
+    def _update(self, claim_id):
+        form = self._get_form(forms.ClaimUpdateForm)
+
+        return 'claim updated', 204
 
     def _get_form(self, form_class):
         form = form_class(request.form, data=request.get_json())

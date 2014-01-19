@@ -1,1 +1,1 @@
-from .config import ActorFactory
+from .sql.factory import SqlActorFactory

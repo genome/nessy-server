@@ -4,10 +4,10 @@ from . import models
 import sqlalchemy
 
 
-__all__ = ['ActorFactory']
+__all__ = ['SqlActorFactory']
 
 
-class ActorFactory(object):
+class SqlActorFactory(object):
     def __init__(self, connection_string):
         self._engine = sqlalchemy.create_engine(connection_string)
         self._Session = sqlalchemy.orm.sessionmaker(bind=self._engine)

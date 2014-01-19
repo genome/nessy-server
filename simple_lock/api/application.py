@@ -16,7 +16,7 @@ def create_app(database_string):
 
 
 def _create_factory(database_string):
-    factory = backend.ActorFactory(database_string)
+    factory = backend.SqlActorFactory(database_string)
     factory.create_tables()
 
     return factory

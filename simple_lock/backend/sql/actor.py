@@ -2,5 +2,5 @@ class Actor(object):
     def __init__(self, session):
         self.session = session
 
-    def close(self):
+    def cleanup(self):
         self.session.close()

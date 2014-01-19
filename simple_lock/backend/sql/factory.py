@@ -12,7 +12,7 @@ class SqlActorFactory(object):
         self._engine = sqlalchemy.create_engine(connection_string)
         self._Session = sqlalchemy.orm.sessionmaker(bind=self._engine)
 
-    def create_tables(self):
+    def initialize(self):
         return models.Base.metadata.create_all(self._engine)
 
     def create_actor(self):

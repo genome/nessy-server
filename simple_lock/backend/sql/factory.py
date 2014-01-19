@@ -16,4 +16,4 @@ class SqlActorFactory(object):
         return models.Base.metadata.create_all(self._engine)
 
     def create_actor(self):
-        return actor.Actor(self._Session())
+        return actor.SqlActor(self._Session())

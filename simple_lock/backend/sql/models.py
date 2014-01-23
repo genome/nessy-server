@@ -28,15 +28,12 @@ class Claim(Base):
     timeout = Column(Interval, index=True, nullable=False)
     created = Column(DateTime, index=True, default=datetime.datetime.utcnow,
             nullable=False)
+    status = Column(Enum(*_VALID_STATUSES), index=True, nullable=False)
 
     # XXX Use a native JSON column for postgres
     user_data = Column(Text)
 
     lock = relationship('Lock', uselist=False, backref='claim')
-
-    @property
-    def status(self):
-        return self.status_history[-1].status
 
     @property
     def timeout_seconds(self):

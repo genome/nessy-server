@@ -42,6 +42,13 @@ class ClaimListGetFilterSuccessTest(APITest):
                 sorted(c['timeout'] for c in response.DATA)):
             self.assertEqual(expected_timeout, actual_timeout)
 
+    def test_filter_by_status(self):
+        active_response = self.get(URL, status='active')
+        self.assertEqual(2, len(active_response.DATA))
+
+        waiting_response = self.get(URL, status='waiting')
+        self.assertEqual(4, len(waiting_response.DATA))
+
 # TODO
 #    def test_filter_by_ttl(self):
 #        pass
@@ -52,10 +59,6 @@ class ClaimListGetFilterSuccessTest(APITest):
 
 # TODO
 #    def test_filter_by_waiting_duration(self):
-#        pass
-
-# TODO
-#    def test_filter_by_status(self):
 #        pass
 
 

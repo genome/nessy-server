@@ -14,17 +14,21 @@ class SqlActor(ActorBase):
     def cleanup(self):
         self.session.close()
 
-    def list_claims(self, limit, offset, resource):
+    def list_claims(self, limit, offset, resource, status):
         query = self.session.query(models.Claim)
+
         if resource is not None:
             query = query.filter_by(resource=resource)
+        if status is not None:
+            query = query.filter_by(status=status)
+
         query = query.limit(limit).offset(offset)
         return query.all()
 
     def create_claim(self, resource, timeout, user_data):
         claim = models.Claim(resource=resource,
                 timeout=datetime.timedelta(seconds=timeout),
-                user_data=user_data)
+                user_data=user_data, status='waiting')
         claim.status_history.append(models.StatusHistory(status='waiting'))
         self.session.add(claim)
         self.session.commit()
@@ -33,6 +37,7 @@ class SqlActor(ActorBase):
             with self.session.transaction:
                 claim.lock = models.Lock(resource=resource,
                     expiration_time=datetime.datetime.utcnow() + claim.timeout)
+                claim.status = 'active'
                 claim.status_history.append(
                         models.StatusHistory(status='active'))
             return claim, True

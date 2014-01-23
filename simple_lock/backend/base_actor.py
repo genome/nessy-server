@@ -9,7 +9,7 @@ class ActorBase(object):
         pass
 
     @abc.abstractmethod
-    def list_claims(self, limit, offset, resource):
+    def list_claims(self, limit, offset, resource, status):
         pass
 
     @abc.abstractmethod

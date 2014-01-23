@@ -1,6 +1,6 @@
 # REST-Based Locking Service
 
-[![Build Status](https://travis-ci.org/mark-burnett/gsc-lock.png?branch=master)](https://travis-ci.org/mark-burnett/gsc-lock)
+[![Build Status](https://travis-ci.org/genome/gsc-lock.png?branch=master)](https://travis-ci.org/genome/gsc-lock)
 
 The purpose of this project is to provide a replacement for the network disk
 based locking system currently in place in the

@@ -51,6 +51,11 @@ class Claim(Base):
         if self.lock:
             return self.lock.active_duration
 
+    @property
+    def waiting_duration(self):
+        if self.status == 'waiting':
+            now = datetime.datetime.utcnow()
+            return (now - self.created).total_seconds()
 
 class StatusHistory(Base):
     __tablename__ = 'status_history'

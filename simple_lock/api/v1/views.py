@@ -24,6 +24,7 @@ claim_fields = {
     'status_history': fields.Nested(status_history_fields),
     'timeout': RealFloat(attribute='timeout_seconds'),
     'ttl': RealFloat,
+    'waiting_duration': RealFloat,
 }
 
 class ClaimListView(Resource):

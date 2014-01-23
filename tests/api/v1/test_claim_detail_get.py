@@ -73,11 +73,20 @@ class ClaimDetailGetActiveSuccessTest(APITest):
 
 
 class ClaimDetailGetWaitingSuccessTest(APITest):
-    pass
+    def setUp(self):
+        super(ClaimDetailGetWaitingSuccessTest, self).setUp()
+        self.post_data = {
+            'resource': 'post-resource',
+            'timeout': 0.010,
+        }
+        self.first_post_response = self.post(POST_URL, self.post_data)
+        self.second_post_response = self.post(POST_URL, self.post_data)
+        self.url = self.second_post_response.headers['Location']
+        self.response = self.get(self.url)
 
-# TODO
-#    def test_should_return_waiting_duration(self):
-#        pass
+    def test_should_return_waiting_duration(self):
+        self.assertIsInstance(self.response.DATA['waiting_duration'], float)
+        self.assertLess(0, self.response.DATA['waiting_duration'])
 
 
 class ClaimDetailGetErrorTest(APITest):

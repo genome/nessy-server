@@ -14,13 +14,36 @@ class SqlActor(ActorBase):
     def cleanup(self):
         self.session.close()
 
-    def list_claims(self, limit, offset, resource, status):
+    def list_claims(self, limit, offset, resource, status,
+            minimum_active_duration, maximum_active_duration):
+        now = datetime.datetime.utcnow()
+
         query = self.session.query(models.Claim)
 
         if resource is not None:
             query = query.filter_by(resource=resource)
         if status is not None:
             query = query.filter_by(status=status)
+
+        if minimum_active_duration is not None:
+            finished_claims = query.filter(models.Claim.activated != None,
+                    models.Claim.deactivated != None,
+                    models.Claim.deactivated - models.Claim.activated
+                    >= minimum_active_duration)
+            active_claims = query.filter(models.Claim.activated != None,
+                    models.Claim.deactivated == None,
+                    now - models.Claim.activated >= minimum_active_duration)
+            query = finished_claims.union(active_claims)
+
+        if maximum_active_duration is not None:
+            finished_claims = query.filter(models.Claim.activated != None,
+                    models.Claim.deactivated != None,
+                    models.Claim.deactivated - models.Claim.activated
+                    <= maximum_active_duration)
+            active_claims = query.filter(models.Claim.activated != None,
+                    models.Claim.deactivated == None,
+                    now - models.Claim.activated <= maximum_active_duration)
+            query = finished_claims.union(active_claims)
 
         query = query.limit(limit).offset(offset)
         return query.all()

@@ -55,6 +55,8 @@ _claim_list.add_argument('limit', type=int, location='args', default=10)
 _claim_list.add_argument('offset', type=int, location='args', default=0)
 _claim_list.add_argument('resource', type=str, location='args')
 _claim_list.add_argument('status', type=str, location='args')
+_claim_list.add_argument('minimum_active_duration', type=float, location='args')
+_claim_list.add_argument('maximum_active_duration', type=float, location='args')
 def get_claim_list_data():
     data = _claim_list.parse_args()
     return data, {}

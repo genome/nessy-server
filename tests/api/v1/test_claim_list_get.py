@@ -49,16 +49,25 @@ class ClaimListGetFilterSuccessTest(APITest):
         waiting_response = self.get(URL, status='waiting')
         self.assertEqual(4, len(waiting_response.DATA))
 
-# TODO
-#    def test_filter_by_ttl(self):
-#        pass
+    def test_filter_by_active_duration(self):
+        min_response = self.get(URL, minimum_active_duration=0)
+        self.assertEqual(2, len(min_response.DATA))
+        max_response = self.get(URL, maximum_active_duration=-1)
+        self.assertEqual(0, len(max_response.DATA))
 
-# TODO
-#    def test_filter_by_active_duration(self):
-#        pass
+        empty_response = self.get(URL, minimum_active_duration=0.002,
+                maximum_active_duration=0.001)
+        self.assertEqual(0, len(empty_response.DATA))
+
+        min_response_no_matches = self.get(URL, minimum_active_duration=1000)
+        self.assertEqual(0, len(min_response_no_matches.DATA))
 
 # TODO
 #    def test_filter_by_waiting_duration(self):
+#        pass
+
+# TODO
+#    def test_filter_by_ttl(self):
 #        pass
 
 

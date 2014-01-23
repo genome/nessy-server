@@ -3,6 +3,7 @@ from sqlalchemy import DateTime, ForeignKey, Enum, Integer, Interval, Text
 from sqlalchemy.orm import backref, relationship
 
 import sqlalchemy.ext.declarative
+import datetime
 
 
 __all__ = ['Base', 'Claim', 'StatusHistory', 'Lock']
@@ -29,17 +30,20 @@ class Claim(Base):
     # XXX Use a native JSON column for postgres
     user_data = Column(Text)
 
-    # XXX Is this column premature optimization?
-    status = Column(Enum(*_VALID_STATUSES), index=True)
     lock = relationship('Lock', uselist=False, backref='claim')
+
+    @property
+    def status(self):
+        return self.status_history[-1].status
 
 
 class StatusHistory(Base):
     __tablename__ = 'status_history'
 
     id = Column(Integer, primary_key=True)
-    timestamp = Column(DateTime, index=True)
+    timestamp = Column(DateTime, index=True, default=datetime.datetime.utcnow)
     status = Column(Enum(*_VALID_STATUSES), index=True)
+    claim_id = Column(Integer, ForeignKey('claim.id'))
 
     claim = relationship('Claim',
             backref=backref('status_history', order_by=timestamp))

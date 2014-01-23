@@ -54,8 +54,6 @@ class ClaimDetailGetWaitingSuccessTest(APITest):
 
 
 class ClaimDetailGetErrorTest(APITest):
-    pass
-
-# TODO
-#    def test_non_existant_claim_should_return_404(self):
-#        pass
+    def test_non_existant_claim_should_return_404(self):
+        response = self.get('/claims/77/')
+        self.assertEqual(404, response.status_code)

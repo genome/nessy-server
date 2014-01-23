@@ -40,3 +40,10 @@ def get_claim_update_data():
         errors['timeout'] = 'Positive timeout required (in seconds)'
 
     return data, errors
+
+_claim_list = reqparse.RequestParser()
+_claim_list.add_argument('limit', type=int, location='args', default=10)
+_claim_list.add_argument('offset', type=int, location='args', default=0)
+def get_claim_list_data():
+    data = _claim_list.parse_args()
+    return data, {}

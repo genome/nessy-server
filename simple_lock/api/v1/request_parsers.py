@@ -8,7 +8,6 @@ __all__ = []
 _claim_post = reqparse.RequestParser()
 _claim_post.add_argument('resource', type=str)
 _claim_post.add_argument('timeout', type=float)
-
 def get_claim_post_data():
     data = _claim_post.parse_args()
 
@@ -27,7 +26,6 @@ def get_claim_post_data():
 _claim_update = reqparse.RequestParser()
 _claim_update.add_argument('timeout', type=float)
 _claim_update.add_argument('status', type=str)
-
 def get_claim_update_data():
     data = _claim_update.parse_args()
 
@@ -40,6 +38,7 @@ def get_claim_update_data():
         errors['timeout'] = 'Positive timeout required (in seconds)'
 
     return data, errors
+
 
 _claim_list = reqparse.RequestParser()
 _claim_list.add_argument('limit', type=int, location='args', default=10)

@@ -6,6 +6,10 @@ from flask.ext.restful import Resource, fields, marshal_with
 __all__ = ['ClaimListView', 'ClaimView']
 
 
+class RealFloat(fields.Float):
+    def format(self, value):
+        return float(value)
+
 status_history_fields = {
     'status': fields.String,
     'timestamp': fields.DateTime,
@@ -17,7 +21,7 @@ claim_fields = {
     'resource': fields.String,
     'status': fields.String,
     'status_history': fields.Nested(status_history_fields),
-    'timeout': fields.Float(attribute='timeout_seconds'),
+    'timeout': RealFloat(attribute='timeout_seconds'),
 #    'ttl': fields.Float,
 }
 

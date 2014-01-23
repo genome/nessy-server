@@ -45,7 +45,7 @@ class ClaimDetailGetGeneralSuccessTest(APITest):
 
     def test_should_return_timeout(self):
         self.assertEqual(self.post_data['timeout'],
-                float(self.response.DATA['timeout']))
+                self.response.DATA['timeout'])
 
 
 class ClaimDetailGetActiveSuccessTest(APITest):

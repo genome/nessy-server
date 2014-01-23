@@ -27,10 +27,6 @@ class ClaimDetailGetGeneralSuccessTest(APITest):
         self.assertGreaterEqual(now, created)
         self.assertLessEqual(now - datetime.timedelta(seconds=1), created)
 
-# TODO
-#    def test_should_return_metadata(self):
-#        pass
-
     def test_should_return_resource(self):
         self.assertEqual(self.post_data['resource'],
                 self.response.DATA['resource'])
@@ -46,6 +42,14 @@ class ClaimDetailGetGeneralSuccessTest(APITest):
     def test_should_return_timeout(self):
         self.assertEqual(self.post_data['timeout'],
                 self.response.DATA['timeout'])
+
+# TODO
+#    def test_should_return_metadata(self):
+#        pass
+
+# TODO
+#    def test_should_return_url(self):
+#        pass
 
 
 class ClaimDetailGetActiveSuccessTest(APITest):

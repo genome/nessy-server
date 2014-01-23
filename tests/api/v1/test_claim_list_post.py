@@ -17,12 +17,12 @@ class ClaimListPostGeneralSuccessTest(APITest):
         response = self.get(url)
         self.assertEqual(200, response.status_code)
 
-# TODO
-#    def test_should_set_user_provided_data(self):
-#        pass
+    def test_should_set_automatic_fields(self):
+        self.assertIsNotNone(self.response.DATA['created'])
+        self.assertIsNotNone(self.response.DATA['status'])
 
 # TODO
-#    def test_should_set_automatic_fields(self):
+#    def test_should_set_user_provided_data(self):
 #        pass
 
 
@@ -39,9 +39,7 @@ class ClaimListPostSuccessWithoutContentionTest(APITest):
         self.assertEqual(201, self.response.status_code)
 
     def test_should_set_status_to_active(self):
-        url = self.response.headers['Location']
-        response = self.get(url)
-        self.assertEqual('active', response.DATA['status'])
+        self.assertEqual('active', self.response.DATA['status'])
 
 # TODO
 #    def test_should_set_ttl_to_timeout(self):

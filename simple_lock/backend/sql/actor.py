@@ -18,9 +18,10 @@ class SqlActor(ActorBase):
         return self.session.query(models.Claim
                 ).limit(limit).offset(offset).all()
 
-    def create_claim(self, resource, timeout):
+    def create_claim(self, resource, timeout, user_data):
         claim = models.Claim(resource=resource,
-                timeout=datetime.timedelta(seconds=timeout))
+                timeout=datetime.timedelta(seconds=timeout),
+                user_data=user_data)
         claim.status_history.append(models.StatusHistory(status='waiting'))
         self.session.add(claim)
         self.session.commit()

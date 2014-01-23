@@ -1,6 +1,7 @@
 from . import request_parsers
 from flask import g
 from flask.ext.restful import Resource, fields, marshal_with
+import simplejson
 
 
 __all__ = ['ClaimListView', 'ClaimView']
@@ -9,6 +10,12 @@ __all__ = ['ClaimListView', 'ClaimView']
 class RealFloat(fields.Float):
     def format(self, value):
         return float(value)
+
+
+class JSONEncoded(fields.Raw):
+    def format(self, value):
+        return simplejson.loads(value)
+
 
 status_history_fields = {
     'status': fields.String,
@@ -24,6 +31,7 @@ claim_fields = {
     'status_history': fields.Nested(status_history_fields),
     'timeout': RealFloat(attribute='timeout_seconds'),
     'ttl': RealFloat,
+    'user_data': JSONEncoded,
     'waiting_duration': RealFloat,
 }
 

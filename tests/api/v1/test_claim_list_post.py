@@ -67,16 +67,16 @@ class ClaimListPostErrorTest(APITest):
     def test_missing_mandatory_parameters_should_return_400(self):
         no_params_response = self.post(URL, data={})
         self.assertEqual(400, no_params_response.status_code)
-#        self.assertIn('resource', no_params_response.data)
-#        self.assertIn('timeout', no_params_response.data)
+        self.assertIn('resource', no_params_response.DATA)
+        self.assertIn('timeout', no_params_response.DATA)
 
         no_resource_response = self.post(URL, {'timeout': 1.2})
         self.assertEqual(400, no_resource_response.status_code)
-#        self.assertIn('resource', no_resource_response.data)
+        self.assertIn('resource', no_resource_response.DATA)
 
         no_timeout_response = self.post(URL, {'resource': 'foo'})
         self.assertEqual(400, no_timeout_response.status_code)
-#        self.assertIn('timeout', no_timeout_response.data)
+        self.assertIn('timeout', no_timeout_response.DATA)
 
     def test_invalid_parameter_values_should_return_400(self):
         empty_resource_response = self.post(URL, {
@@ -84,14 +84,14 @@ class ClaimListPostErrorTest(APITest):
             'timeout': 1.2,
         })
         self.assertEqual(400, empty_resource_response.status_code)
-#        self.assertIn('resource', empty_resource_response.data)
+        self.assertIn('resource', empty_resource_response.DATA)
 
         negative_timeout_response = self.post(URL, {
             'resource': 'foo',
             'timeout': -1.2,
         })
         self.assertEqual(400, negative_timeout_response.status_code)
-#        self.assertIn('timeout', negative_timeout_response.data)
+        self.assertIn('timeout', negative_timeout_response.DATA)
 
 # TODO
 #    def test_unknown_parameters_should_return_400(self):

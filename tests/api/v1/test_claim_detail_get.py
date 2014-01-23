@@ -43,6 +43,9 @@ class ClaimDetailGetGeneralSuccessTest(APITest):
         self.assertEqual(self.post_data['timeout'],
                 self.response.DATA['timeout'])
 
+    def test_empty_user_provided_data_should_be_null(self):
+        self.assertEqual(None, self.response.DATA['user_data'])
+
 # TODO
 #    def test_should_return_metadata(self):
 #        pass

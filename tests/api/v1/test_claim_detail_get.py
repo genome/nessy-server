@@ -1,4 +1,7 @@
 from ..base import APITest
+import datetime
+import dateutil.parser
+import pytz
 
 
 POST_URL = '/v1/claims/'
@@ -18,29 +21,31 @@ class ClaimDetailGetGeneralSuccessTest(APITest):
     def test_should_return_200(self):
         self.assertEqual(200, self.response.status_code)
 
-# TODO
-#    def test_should_return_creation_time(self):
-#        pass
+    def test_should_return_creation_time(self):
+        created = dateutil.parser.parse(self.response.DATA['created'])
+        now = pytz.UTC.localize(datetime.datetime.utcnow())
+        self.assertGreaterEqual(now, created)
+        self.assertLessEqual(now - datetime.timedelta(seconds=1), created)
 
 # TODO
 #    def test_should_return_metadata(self):
 #        pass
 
-# TODO
-#    def test_should_return_resource(self):
-#        pass
+    def test_should_return_resource(self):
+        self.assertEqual(self.post_data['resource'],
+                self.response.DATA['resource'])
 
-# TODO
-#    def test_should_return_status(self):
-#        pass
+    def test_should_return_status(self):
+        self.assertEqual('active', self.response.DATA['status'])
 
-# TODO
-#    def test_should_return_status_history(self):
-#        pass
+    def test_should_return_status_history(self):
+        status_history = self.response.DATA['status_history']
+        self.assertEqual(['waiting', 'active'],
+                [sh['status'] for sh in status_history])
 
-# TODO
-#    def test_should_return_timeout(self):
-#        pass
+    def test_should_return_timeout(self):
+        self.assertEqual(self.post_data['timeout'],
+                float(self.response.DATA['timeout']))
 
 
 class ClaimDetailGetActiveSuccessTest(APITest):

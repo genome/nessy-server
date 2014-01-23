@@ -13,8 +13,11 @@ status_history_fields = {
 
 claim_fields = {
 #    'url': fields.Url(,
+    'created': fields.DateTime,
+    'resource': fields.String,
     'status': fields.String,
     'status_history': fields.Nested(status_history_fields),
+    'timeout': fields.Float(attribute='timeout_seconds'),
 #    'ttl': fields.Float,
 }
 

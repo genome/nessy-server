@@ -26,6 +26,7 @@ class Claim(Base):
     id = Column(Integer, primary_key=True)
     resource = Column(Text, index=True)
     timeout = Column(Interval, index=True)
+    created = Column(DateTime, index=True, default=datetime.datetime.utcnow)
 
     # XXX Use a native JSON column for postgres
     user_data = Column(Text)
@@ -35,6 +36,10 @@ class Claim(Base):
     @property
     def status(self):
         return self.status_history[-1].status
+
+    @property
+    def timeout_seconds(self):
+        return self.timeout.total_seconds()
 
 
 class StatusHistory(Base):

@@ -1,4 +1,5 @@
 flask
 flask-restful
+python-dateutil
 simplejson
 sqlalchemy

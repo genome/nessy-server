@@ -24,9 +24,10 @@ class Claim(Base):
     __tablename__ = 'claim'
 
     id = Column(Integer, primary_key=True)
-    resource = Column(Text, index=True)
-    timeout = Column(Interval, index=True)
-    created = Column(DateTime, index=True, default=datetime.datetime.utcnow)
+    resource = Column(Text, index=True, nullable=False)
+    timeout = Column(Interval, index=True, nullable=False)
+    created = Column(DateTime, index=True, default=datetime.datetime.utcnow,
+            nullable=False)
 
     # XXX Use a native JSON column for postgres
     user_data = Column(Text)
@@ -57,13 +58,15 @@ class Claim(Base):
             now = datetime.datetime.utcnow()
             return (now - self.created).total_seconds()
 
+
 class StatusHistory(Base):
     __tablename__ = 'status_history'
 
     id = Column(Integer, primary_key=True)
-    timestamp = Column(DateTime, index=True, default=datetime.datetime.utcnow)
-    status = Column(Enum(*_VALID_STATUSES), index=True)
-    claim_id = Column(Integer, ForeignKey('claim.id'))
+    timestamp = Column(DateTime, index=True, default=datetime.datetime.utcnow,
+            nullable=False)
+    status = Column(Enum(*_VALID_STATUSES), index=True, nullable=False)
+    claim_id = Column(Integer, ForeignKey('claim.id'), nullable=False)
 
     claim = relationship('Claim',
             backref=backref('status_history', order_by=timestamp))
@@ -74,15 +77,16 @@ class Lock(Base):
 
     id = Column(Integer, primary_key=True)
 
-    resource = Column(Text, unique=True)
-    claim_id = Column(Integer, ForeignKey('claim.id'), unique=True)
+    resource = Column(Text, unique=True, nullable=False)
+    claim_id = Column(Integer, ForeignKey('claim.id'), unique=True,
+            nullable=False)
 
     activation_time = Column(DateTime, index=True,
-            default=datetime.datetime.utcnow)
+            default=datetime.datetime.utcnow, nullable=False)
     expiration_time = Column(DateTime, index=True,
-            default=datetime.datetime.utcnow)
+            default=datetime.datetime.utcnow, nullable=False)
     expiration_update_time = Column(DateTime, index=True,
-            default=datetime.datetime.utcnow)
+            default=datetime.datetime.utcnow, nullable=False)
 
     @property
     def ttl(self):

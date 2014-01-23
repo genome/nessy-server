@@ -17,6 +17,7 @@ status_history_fields = {
 
 claim_fields = {
 #    'url': fields.Url(,
+    'active_duration': RealFloat,
     'created': fields.DateTime,
     'resource': fields.String,
     'status': fields.String,

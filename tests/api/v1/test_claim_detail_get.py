@@ -67,9 +67,9 @@ class ClaimDetailGetActiveSuccessTest(APITest):
         self.assertIsInstance(self.response.DATA['ttl'], float)
         self.assertGreater(self.post_data['timeout'], self.response.DATA['ttl'])
 
-# TODO
-#    def test_should_return_active_duration(self):
-#        pass
+    def test_should_return_active_duration(self):
+        self.assertIsInstance(self.response.DATA['active_duration'], float)
+        self.assertLess(0, self.response.DATA['active_duration'])
 
 
 class ClaimDetailGetWaitingSuccessTest(APITest):

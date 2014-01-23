@@ -46,6 +46,11 @@ class Claim(Base):
         if self.lock:
             return self.lock.ttl
 
+    @property
+    def active_duration(self):
+        if self.lock:
+            return self.lock.active_duration
+
 
 class StatusHistory(Base):
     __tablename__ = 'status_history'
@@ -78,3 +83,8 @@ class Lock(Base):
     def ttl(self):
         now = datetime.datetime.utcnow()
         return (self.expiration_time - now).total_seconds()
+
+    @property
+    def active_duration(self):
+        now = datetime.datetime.utcnow()
+        return (now - self.activation_time).total_seconds()

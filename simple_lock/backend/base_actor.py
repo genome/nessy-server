@@ -13,7 +13,7 @@ class ActorBase(object):
         pass
 
     @abc.abstractmethod
-    def create_claim(self, resource, timeout):
+    def create_claim(self, resource, timeout, user_data):
         pass
 
     @abc.abstractmethod

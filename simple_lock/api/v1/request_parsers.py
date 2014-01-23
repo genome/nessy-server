@@ -1,13 +1,18 @@
 from . import exceptions
 from flask.ext.restful import reqparse
+import simplejson
 
 
 __all__ = []
+
+def pass_through_type(value):
+    return value
 
 
 _claim_post = reqparse.RequestParser()
 _claim_post.add_argument('resource', type=str)
 _claim_post.add_argument('timeout', type=float)
+_claim_post.add_argument('user_data', type=pass_through_type)
 def get_claim_post_data():
     data = _claim_post.parse_args()
 
@@ -19,6 +24,11 @@ def get_claim_post_data():
         errors['timeout'] = 'No timeout specified'
     elif data['timeout'] < 0:
         errors['timeout'] = 'Positive timeout required (in seconds)'
+
+    try:
+        data['user_data'] = simplejson.dumps(data['user_data'])
+    except TypeError, ValueError:
+        errors['user_data'] = 'Failed to serialize user_data'
 
     return data, errors
 

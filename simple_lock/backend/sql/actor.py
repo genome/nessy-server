@@ -18,16 +18,18 @@ class SqlActor(ActorBase):
         return self.session.query(models.Claim
                 ).limit(limit).offset(offset).all()
 
-    def create_claim(self, resource, timeout):
+    def create_claim(self, resource, timeout, user_data):
         claim = models.Claim(resource=resource,
-                timeout=datetime.timedelta(seconds=timeout))
+                timeout=datetime.timedelta(seconds=timeout),
+                user_data=user_data)
         claim.status_history.append(models.StatusHistory(status='waiting'))
         self.session.add(claim)
         self.session.commit()
 
         try:
             with self.session.transaction:
-                claim.lock = models.Lock(resource=resource)
+                claim.lock = models.Lock(resource=resource,
+                    expiration_time=datetime.datetime.utcnow() + claim.timeout)
                 claim.status_history.append(
                         models.StatusHistory(status='active'))
             return claim, True

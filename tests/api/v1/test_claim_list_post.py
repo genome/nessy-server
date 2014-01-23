@@ -9,6 +9,10 @@ class ClaimListPostGeneralSuccessTest(APITest):
         self.post_data = {
             'resource': 'post-resource',
             'timeout': 0.010,
+            'user_data': {
+                'foo': 'bar',
+                'baz': 42,
+            },
         }
         self.response = self.post(URL, self.post_data)
 
@@ -21,9 +25,9 @@ class ClaimListPostGeneralSuccessTest(APITest):
         self.assertIsNotNone(self.response.DATA['created'])
         self.assertIsNotNone(self.response.DATA['status'])
 
-# TODO
-#    def test_should_set_user_provided_data(self):
-#        pass
+    def test_should_set_user_provided_data(self):
+        self.assertEqual(self.post_data['user_data'],
+                self.response.DATA['user_data'])
 
 
 class ClaimListPostSuccessWithoutContentionTest(APITest):
@@ -31,7 +35,7 @@ class ClaimListPostSuccessWithoutContentionTest(APITest):
         super(ClaimListPostSuccessWithoutContentionTest, self).setUp()
         self.post_data = {
             'resource': 'post-resource',
-            'timeout': 0.010,
+            'timeout': 1,
         }
         self.response = self.post(URL, self.post_data)
 
@@ -41,9 +45,10 @@ class ClaimListPostSuccessWithoutContentionTest(APITest):
     def test_should_set_status_to_active(self):
         self.assertEqual('active', self.response.DATA['status'])
 
-# TODO
-#    def test_should_set_ttl_to_timeout(self):
-#        pass
+    def test_should_set_ttl_to_timeout(self):
+        self.assertIsNotNone(self.response.DATA['ttl'])
+        self.assertLess(self.response.DATA['ttl'], self.post_data['timeout'])
+        self.assertGreaterEqual(self.response.DATA['ttl'], 0)
 
 
 class ClaimListPostSuccessWithContentionTest(APITest):

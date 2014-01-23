@@ -1,12 +1,23 @@
 from ..base import APITest
 
 
-class ClaimListGetSuccessGeneralTest(APITest):
-    pass
+URL = '/v1/claims/'
 
-# TODO
-#    def test_should_return_200(self):
-#        pass
+
+class ClaimListGetSuccessGeneralTest(APITest):
+    def setUp(self):
+        super(ClaimListGetSuccessGeneralTest, self).setUp()
+        self.post_data = {
+            'resource': 'post-resource',
+            'timeout': 0.010,
+        }
+        self.response = self.get(URL)
+
+    def test_should_return_200(self):
+        self.assertEqual(200, self.response.status_code)
+
+    def test_initial_get_should_be_empty_list(self):
+        self.assertEqual([], self.response.DATA)
 
 
 class ClaimListGetFilterSuccessTest(APITest):
@@ -30,10 +41,6 @@ class ClaimListGetFilterSuccessTest(APITest):
 
 # TODO
 #    def test_filter_by_status(self):
-#        pass
-
-# TODO
-#    def test_pagination(self):
 #        pass
 
 

@@ -25,7 +25,7 @@ class ClaimDetailGetGeneralSuccessTest(APITest):
         created = dateutil.parser.parse(self.response.DATA['created'])
         now = pytz.UTC.localize(datetime.datetime.utcnow())
         self.assertGreaterEqual(now, created)
-        self.assertLessEqual(now - datetime.timedelta(seconds=1), created)
+        self.assertLessEqual(now - datetime.timedelta(seconds=2), created)
 
     def test_should_return_resource(self):
         self.assertEqual(self.post_data['resource'],

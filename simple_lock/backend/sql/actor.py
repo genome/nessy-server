@@ -34,10 +34,12 @@ class SqlActor(ActorBase):
         self.session.commit()
 
         try:
+            now = datetime.datetime.utcnow()
             with self.session.transaction:
                 claim.lock = models.Lock(resource=resource,
-                    expiration_time=datetime.datetime.utcnow() + claim.timeout)
+                    expiration_time=now + claim.timeout)
                 claim.status = 'active'
+                claim.activated = now
                 claim.status_history.append(
                         models.StatusHistory(status='active'))
             return claim, True

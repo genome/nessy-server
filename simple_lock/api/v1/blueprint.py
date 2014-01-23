@@ -1,6 +1,5 @@
-from . import claim
 from . import exceptions
-
+from .api import api
 import flask
 
 
@@ -17,10 +16,4 @@ def _api_exception_handler(exc):
     return response
 
 
-claim_view = claim.ClaimView.as_view('claim_api')
-blueprint.add_url_rule('/claims/', defaults={'claim_id': None},
-        view_func=claim_view, methods=['GET'])
-blueprint.add_url_rule('/claims/',
-        view_func=claim_view, methods=['POST'])
-blueprint.add_url_rule('/claims/<int:claim_id>/',
-        view_func=claim_view, methods=['GET', 'PATCH', 'PUT'])
+api.init_app(blueprint)

@@ -13,8 +13,7 @@ class ClaimUpdateMixinBase(object):
         }
         self.changed_data = {}
 
-        self.post_response = self.client.post('/v1/claims/',
-                data=self.post_data)
+        self.post_response = self.post('/v1/claims/', self.post_data)
         self.resource_url = self.post_response.headers['Location']
 
     @abc.abstractproperty
@@ -26,7 +25,7 @@ class ClaimUpdateMixinBase(object):
         pass
 
     def update(self):
-        method = getattr(self.client, self.method)
+        method = getattr(self, self.method)
         return method(self.resource_url, data=self.method_data())
 
 

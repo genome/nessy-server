@@ -1,4 +1,4 @@
 flask
-flask-wtf
+flask-restful
 simplejson
 sqlalchemy

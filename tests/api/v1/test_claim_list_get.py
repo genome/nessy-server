@@ -1,4 +1,5 @@
 from ..base import APITest
+import itertools
 
 
 URL = '/v1/claims/'
@@ -21,11 +22,25 @@ class ClaimListGetSuccessGeneralTest(APITest):
 
 
 class ClaimListGetFilterSuccessTest(APITest):
-    pass
+    def setUp(self):
+        super(ClaimListGetFilterSuccessTest, self).setUp()
 
-# TODO
-#    def test_filter_by_resource(self):
-#        pass
+        self.resources = ['foo', 'bar']
+        self.timeouts = [1, 10, 100]
+
+        for resource, timeout in itertools.product(self.resources,
+                self.timeouts):
+            self.post(URL, {
+                'resource': resource,
+                'timeout': timeout,
+            })
+
+    def test_filter_by_resource(self):
+        response = self.get(URL, resource='foo')
+        self.assertEqual(3, len(response.DATA))
+        for expected_timeout, actual_timeout in itertools.izip(self.timeouts,
+                sorted(c['timeout'] for c in response.DATA)):
+            self.assertEqual(expected_timeout, actual_timeout)
 
 # TODO
 #    def test_filter_by_ttl(self):

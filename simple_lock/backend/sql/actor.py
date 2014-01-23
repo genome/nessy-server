@@ -14,9 +14,12 @@ class SqlActor(ActorBase):
     def cleanup(self):
         self.session.close()
 
-    def list_claims(self, limit, offset):
-        return self.session.query(models.Claim
-                ).limit(limit).offset(offset).all()
+    def list_claims(self, limit, offset, resource):
+        query = self.session.query(models.Claim)
+        if resource is not None:
+            query = query.filter_by(resource=resource)
+        query = query.limit(limit).offset(offset)
+        return query.all()
 
     def create_claim(self, resource, timeout, user_data):
         claim = models.Claim(resource=resource,

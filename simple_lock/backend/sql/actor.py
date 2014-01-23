@@ -28,7 +28,8 @@ class SqlActor(ActorBase):
 
         try:
             with self.session.transaction:
-                claim.lock = models.Lock(resource=resource)
+                claim.lock = models.Lock(resource=resource,
+                    expiration_time=datetime.datetime.utcnow() + claim.timeout)
                 claim.status_history.append(
                         models.StatusHistory(status='active'))
             return claim, True

@@ -22,7 +22,7 @@ claim_fields = {
     'status': fields.String,
     'status_history': fields.Nested(status_history_fields),
     'timeout': RealFloat(attribute='timeout_seconds'),
-#    'ttl': fields.Float,
+    'ttl': RealFloat,
 }
 
 class ClaimListView(Resource):

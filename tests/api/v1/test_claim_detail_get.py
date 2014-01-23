@@ -53,11 +53,19 @@ class ClaimDetailGetGeneralSuccessTest(APITest):
 
 
 class ClaimDetailGetActiveSuccessTest(APITest):
-    pass
+    def setUp(self):
+        super(ClaimDetailGetActiveSuccessTest, self).setUp()
+        self.post_data = {
+            'resource': 'post-resource',
+            'timeout': 0.010,
+        }
+        self.post_response = self.post(POST_URL, self.post_data)
+        self.url = self.post_response.headers['Location']
+        self.response = self.get(self.url)
 
-# TODO
-#    def test_should_return_ttl(self):
-#        pass
+    def test_should_return_ttl(self):
+        self.assertIsInstance(self.response.DATA['ttl'], float)
+        self.assertGreater(self.post_data['timeout'], self.response.DATA['ttl'])
 
 # TODO
 #    def test_should_return_active_duration(self):

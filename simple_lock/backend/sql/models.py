@@ -41,6 +41,11 @@ class Claim(Base):
     def timeout_seconds(self):
         return self.timeout.total_seconds()
 
+    @property
+    def ttl(self):
+        if self.lock:
+            return self.lock.ttl
+
 
 class StatusHistory(Base):
     __tablename__ = 'status_history'
@@ -62,6 +67,14 @@ class Lock(Base):
     resource = Column(Text, unique=True)
     claim_id = Column(Integer, ForeignKey('claim.id'), unique=True)
 
-    activation_time = Column(DateTime, index=True)
-    expiration_time = Column(DateTime, index=True)
-    expiration_update_time = Column(DateTime, index=True)
+    activation_time = Column(DateTime, index=True,
+            default=datetime.datetime.utcnow)
+    expiration_time = Column(DateTime, index=True,
+            default=datetime.datetime.utcnow)
+    expiration_update_time = Column(DateTime, index=True,
+            default=datetime.datetime.utcnow)
+
+    @property
+    def ttl(self):
+        now = datetime.datetime.utcnow()
+        return (self.expiration_time - now).total_seconds()

@@ -11,6 +11,11 @@ class RealFloat(fields.Float):
     def format(self, value):
         return float(value)
 
+class MaybeTimedelta(fields.Raw):
+    def format(self, value):
+        if value is not None:
+            return value.total_seconds()
+
 
 class JSONEncoded(fields.Raw):
     def format(self, value):
@@ -24,7 +29,7 @@ status_history_fields = {
 
 claim_fields = {
 #    'url': fields.Url(,
-    'active_duration': RealFloat,
+    'active_duration': MaybeTimedelta,
     'created': fields.DateTime,
     'resource': fields.String,
     'status': fields.String,
@@ -32,7 +37,7 @@ claim_fields = {
     'timeout': RealFloat(attribute='timeout_seconds'),
     'ttl': RealFloat,
     'user_data': JSONEncoded,
-    'waiting_duration': RealFloat,
+    'waiting_duration': MaybeTimedelta,
 }
 
 class ClaimListView(Resource):

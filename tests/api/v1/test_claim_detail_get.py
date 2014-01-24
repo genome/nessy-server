@@ -1,6 +1,7 @@
 from ..base import APITest
 import datetime
 import dateutil.parser
+import time
 import pytz
 
 
@@ -68,11 +69,14 @@ class ClaimDetailGetActiveSuccessTest(APITest):
 
     def test_should_return_ttl(self):
         self.assertIsInstance(self.response.DATA['ttl'], float)
-        self.assertGreater(self.post_data['timeout'], self.response.DATA['ttl'])
+        self.assertGreaterEqual(self.post_data['timeout'],
+                self.response.DATA['ttl'])
 
     def test_should_return_active_duration(self):
         self.assertIsInstance(self.response.DATA['active_duration'], float)
-        self.assertLess(0, self.response.DATA['active_duration'])
+        time.sleep(0.010)
+        updated_response = self.get(self.url)
+        self.assertLess(0, updated_response.DATA['active_duration'])
 
 
 class ClaimDetailGetWaitingSuccessTest(APITest):
@@ -89,7 +93,9 @@ class ClaimDetailGetWaitingSuccessTest(APITest):
 
     def test_should_return_waiting_duration(self):
         self.assertIsInstance(self.response.DATA['waiting_duration'], float)
-        self.assertLess(0, self.response.DATA['waiting_duration'])
+        time.sleep(0.010)
+        updated_response = self.get(self.url)
+        self.assertLess(0, updated_response.DATA['waiting_duration'])
 
 
 class ClaimDetailGetErrorTest(APITest):

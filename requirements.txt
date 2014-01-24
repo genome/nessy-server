@@ -1,5 +1,6 @@
 flask
 flask-restful
+psycopg2
 python-dateutil
 simplejson
 sqlalchemy

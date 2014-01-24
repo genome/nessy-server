@@ -10,7 +10,8 @@ class ActorBase(object):
 
     @abc.abstractmethod
     def list_claims(self, limit, offset, resource, status,
-            minimum_active_duration, maximum_active_duration):
+            minimum_active_duration, maximum_active_duration,
+            minimum_waiting_duration, maximum_waiting_duration):
         pass
 
     @abc.abstractmethod

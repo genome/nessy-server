@@ -1,6 +1,8 @@
 from sqlalchemy import Column
 from sqlalchemy import DateTime, ForeignKey, Enum, Integer, Interval, Text
-from sqlalchemy.orm import backref, relationship
+from sqlalchemy import func, select
+from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.orm import backref, column_property, relationship
 
 import sqlalchemy.ext.declarative
 import datetime
@@ -26,17 +28,62 @@ class Claim(Base):
     id = Column(Integer, primary_key=True)
     resource = Column(Text, index=True, nullable=False)
     timeout = Column(Interval, index=True, nullable=False)
-    status = Column(Enum(*_VALID_STATUSES), index=True, nullable=False)
+    status = Column(Enum(*_VALID_STATUSES, name='foo'), index=True, nullable=False)
 
-    created = Column(DateTime, index=True, default=datetime.datetime.utcnow,
+    created = Column(DateTime(timezone=True), index=True, default=func.now(),
             nullable=False)
-    activated = Column(DateTime, index=True)
-    deactivated = Column(DateTime, index=True)
+    activated = Column(DateTime(timezone=True), index=True)
+    deactivated = Column(DateTime(timezone=True), index=True)
 
     # XXX Use a native JSON column for postgres
     user_data = Column(Text)
 
     lock = relationship('Lock', uselist=False, backref='claim')
+
+    now = column_property(select([func.now()]))
+
+
+    @hybrid_property
+    def _done_active_duration(self):
+        return self.deactivated - self.activated
+
+    @_done_active_duration.expression
+    def _done_active_duration(cls):
+        return cls.deactivated - cls.activated
+
+    @hybrid_property
+    def _live_active_duration(self):
+        return self.now - self.activated
+
+    @_live_active_duration.expression
+    def _live_active_duration(cls):
+        return cls.now - cls.activated
+
+
+    @hybrid_property
+    def _skip_waiting_duration(self):
+        return self.deactivated - self.created
+
+    @_skip_waiting_duration.expression
+    def _skip_waiting_duration(cls):
+        return cls.deactivated - cls.created
+
+    @hybrid_property
+    def _done_waiting_duration(self):
+        return self.activated - self.created
+
+    @_done_waiting_duration.expression
+    def _done_waiting_duration(cls):
+        return cls.activated - cls.created
+
+    @hybrid_property
+    def _still_waiting_duration(self):
+        return self.now - self.created
+
+    @_still_waiting_duration.expression
+    def _still_waiting_duration(cls):
+        return cls.now - cls.created
+
 
     @property
     def timeout_seconds(self):
@@ -45,35 +92,34 @@ class Claim(Base):
     @property
     def ttl(self):
         if self.lock:
-            return self.lock.ttl
+            return self.lock.ttl.total_seconds()
 
     @property
     def active_duration(self):
         if self.activated is not None:
             if self.deactivated is not None:
-                return (self.deactivated - self.activated).total_seconds()
+                return self.deactivated - self.activated
             else:
-                now = datetime.datetime.utcnow()
-                return (now - self.activated).total_seconds()
+                return self.now - self.activated
 
     @property
     def waiting_duration(self):
         if self.activated is not None:
-            return (self.activated - self.created).total_seconds()
+            return self.activated - self.created
         elif self.deactivated is not None:
-            return (self.deactivated - self.created).total_seconds()
+            return self.deactivated - self.created
         else:
-            now = datetime.datetime.utcnow()
-            return (now - self.created).total_seconds()
+            return self.now - self.created
 
 
 class StatusHistory(Base):
     __tablename__ = 'status_history'
 
     id = Column(Integer, primary_key=True)
-    timestamp = Column(DateTime, index=True, default=datetime.datetime.utcnow,
+    timestamp = Column(DateTime(timezone=True), default=func.now(),
             nullable=False)
-    status = Column(Enum(*_VALID_STATUSES), index=True, nullable=False)
+    status = Column(Enum(*_VALID_STATUSES, name='foo'), index=True,
+            nullable=False)
     claim_id = Column(Integer, ForeignKey('claim.id'), nullable=False)
 
     claim = relationship('Claim',
@@ -89,12 +135,17 @@ class Lock(Base):
     claim_id = Column(Integer, ForeignKey('claim.id'), unique=True,
             nullable=False)
 
-    expiration_time = Column(DateTime, index=True,
-            default=datetime.datetime.utcnow, nullable=False)
-    expiration_update_time = Column(DateTime, index=True,
-            default=datetime.datetime.utcnow, nullable=False)
+    expiration_time = Column(DateTime(timezone=True), index=True,
+            default=func.now(), nullable=False)
+    expiration_update_time = Column(DateTime(timezone=True), index=True,
+            onupdate=func.now())
 
-    @property
+    now = column_property(select([func.now()]))
+
+    @hybrid_property
     def ttl(self):
-        now = datetime.datetime.utcnow()
-        return (self.expiration_time - now).total_seconds()
+        return self.expiration_time - self.now
+
+    @ttl.expression
+    def ttl(cls):
+        return cls.expiration_time - cls.now

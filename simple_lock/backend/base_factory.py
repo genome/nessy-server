@@ -9,6 +9,9 @@ class FactoryBase(object):
         pass
 
     @abc.abstractmethod
-    def create_actor(self):
+    def destroy(self):
         pass
 
+    @abc.abstractmethod
+    def create_actor(self):
+        pass

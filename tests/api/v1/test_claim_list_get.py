@@ -1,5 +1,6 @@
 from ..base import APITest
 import itertools
+import time
 
 
 URL = '/v1/claims/'
@@ -62,9 +63,18 @@ class ClaimListGetFilterSuccessTest(APITest):
         min_response_no_matches = self.get(URL, minimum_active_duration=1000)
         self.assertEqual(0, len(min_response_no_matches.DATA))
 
-# TODO
-#    def test_filter_by_waiting_duration(self):
-#        pass
+    def test_filter_by_waiting_duration(self):
+        everyone_min = self.get(URL, minimum_waiting_duration=0)
+        self.assertEqual(6, len(everyone_min.DATA))
+        everyone_max = self.get(URL, maximum_waiting_duration=1)
+        self.assertEqual(6, len(everyone_max.DATA))
+
+        time.sleep(0.010)
+        min_response = self.get(URL, minimum_waiting_duration=0.010)
+        self.assertEqual(4, len(min_response.DATA))
+        max_response = self.get(URL, maximum_waiting_duration=0.010)
+        self.assertEqual(2, len(max_response.DATA))
+
 
 # TODO
 #    def test_filter_by_ttl(self):

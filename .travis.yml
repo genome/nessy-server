@@ -2,4 +2,8 @@ language: python
 python: "2.7"
 
 install: pip install tox
-script: tox
+
+before_script:
+    - psql -c 'create database locking-test;' -U postgres
+script:
+    - LOCKING_TEST_DB='postgres://postgres@localhost/locking-test' tox

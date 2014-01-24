@@ -1,11 +1,14 @@
 from simple_lock.api import application
 import simplejson
+import os
 import unittest
 
 
 class APITest(unittest.TestCase):
     def setUp(self):
-        self.app = application.create_app('postgres://localhost/neato',
+        self.app = application.create_app(
+                os.environ.get('LOCKING_TEST_DB',
+                    'postgres://postgres@localhost/locking-test'),
                 rebuild=True)
         self.client = self.app.test_client()
 

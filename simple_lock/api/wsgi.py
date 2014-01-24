@@ -1,6 +1,7 @@
 from . import application
+import os
 
-app = application.create_app('sqlite:///db.sqlite')
+app = application.create_app(os.environ['LOCKING_DB'])
 
 
 if __name__ == '__main__':

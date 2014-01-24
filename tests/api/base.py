@@ -5,7 +5,8 @@ import unittest
 
 class APITest(unittest.TestCase):
     def setUp(self):
-        self.app = application.create_app('postgres://localhost/neato')
+        self.app = application.create_app('postgres://localhost/neato',
+                rebuild=True)
         self.client = self.app.test_client()
 
     def get(self, url, **kwargs):

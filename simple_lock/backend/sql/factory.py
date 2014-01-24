@@ -14,7 +14,10 @@ class SqlActorFactory(FactoryBase):
         self._Session = sqlalchemy.orm.sessionmaker(bind=self._engine)
 
     def initialize(self):
-        return models.Base.metadata.create_all(self._engine)
+        models.Base.metadata.create_all(self._engine)
+
+    def destroy(self):
+        models.Base.metadata.drop_all(self._engine)
 
     def create_actor(self):
         return actor.SqlActor(self._Session())

@@ -8,7 +8,7 @@ class APITest(unittest.TestCase):
     def setUp(self):
         self.app = application.create_app(
                 os.environ.get('LOCKING_TEST_DB',
-                    'postgres://postgres@localhost/locking-test'),
+                    'postgres://postgres@localhost/locking_test'),
                 rebuild=True)
         self.client = self.app.test_client()
 

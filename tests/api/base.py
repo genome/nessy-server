@@ -8,8 +8,8 @@ class APITest(unittest.TestCase):
         self.app = application.create_app('sqlite:///:memory:')
         self.client = self.app.test_client()
 
-    def get(self, url):
-        return _deserialize_response(self.client.get(url))
+    def get(self, url, **kwargs):
+        return _deserialize_response(self.client.get(url, query_string=kwargs))
 
     def patch(self, url, data):
         return _deserialize_response(self.client.patch(url,

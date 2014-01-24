@@ -1,4 +1,5 @@
 from ..base import APITest
+import itertools
 
 
 URL = '/v1/claims/'
@@ -21,26 +22,52 @@ class ClaimListGetSuccessGeneralTest(APITest):
 
 
 class ClaimListGetFilterSuccessTest(APITest):
-    pass
+    def setUp(self):
+        super(ClaimListGetFilterSuccessTest, self).setUp()
 
-# TODO
-#    def test_filter_by_resource(self):
-#        pass
+        self.resources = ['foo', 'bar']
+        self.timeouts = [1, 10, 100]
 
-# TODO
-#    def test_filter_by_ttl(self):
-#        pass
+        for resource, timeout in itertools.product(self.resources,
+                self.timeouts):
+            self.post(URL, {
+                'resource': resource,
+                'timeout': timeout,
+            })
 
-# TODO
-#    def test_filter_by_active_duration(self):
-#        pass
+    def test_filter_by_resource(self):
+        response = self.get(URL, resource='foo')
+        self.assertEqual(3, len(response.DATA))
+        for expected_timeout, actual_timeout in itertools.izip(self.timeouts,
+                sorted(c['timeout'] for c in response.DATA)):
+            self.assertEqual(expected_timeout, actual_timeout)
+
+    def test_filter_by_status(self):
+        active_response = self.get(URL, status='active')
+        self.assertEqual(2, len(active_response.DATA))
+
+        waiting_response = self.get(URL, status='waiting')
+        self.assertEqual(4, len(waiting_response.DATA))
+
+    def test_filter_by_active_duration(self):
+        min_response = self.get(URL, minimum_active_duration=0)
+        self.assertEqual(2, len(min_response.DATA))
+        max_response = self.get(URL, maximum_active_duration=-1)
+        self.assertEqual(0, len(max_response.DATA))
+
+        empty_response = self.get(URL, minimum_active_duration=0.002,
+                maximum_active_duration=0.001)
+        self.assertEqual(0, len(empty_response.DATA))
+
+        min_response_no_matches = self.get(URL, minimum_active_duration=1000)
+        self.assertEqual(0, len(min_response_no_matches.DATA))
 
 # TODO
 #    def test_filter_by_waiting_duration(self):
 #        pass
 
 # TODO
-#    def test_filter_by_status(self):
+#    def test_filter_by_ttl(self):
 #        pass
 
 

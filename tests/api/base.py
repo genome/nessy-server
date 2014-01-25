@@ -9,7 +9,7 @@ class APITest(unittest.TestCase):
         self.app = application.create_app(
                 os.environ.get('LOCKING_TEST_DB',
                     'postgres://postgres@localhost/locking_test'),
-                rebuild=True)
+                purge=True)
         self.client = self.app.test_client()
 
     def get(self, url, **kwargs):

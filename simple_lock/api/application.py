@@ -6,8 +6,8 @@ import flask
 __all__ = ['create_app']
 
 
-def create_app(database_string, rebuild=False):
-    factory = _create_factory(database_string, rebuild=rebuild)
+def create_app(database_string, purge=False):
+    factory = _create_factory(database_string, purge=purge)
     app = _create_app_from_blueprints()
 
     _attach_factory_to_app(factory, app)
@@ -15,11 +15,11 @@ def create_app(database_string, rebuild=False):
     return app
 
 
-def _create_factory(database_string, rebuild):
+def _create_factory(database_string, purge):
     factory = backend.SqlActorFactory(database_string)
-    if rebuild:
-        factory.destroy()
     factory.initialize()
+    if purge:
+        factory.purge()
 
     return factory
 

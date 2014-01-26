@@ -7,12 +7,13 @@ import simplejson
 __all__ = ['ClaimListView', 'ClaimView']
 
 
-class RealFloat(fields.Float):
-    def format(self, value):
-        return float(value)
-
 class MaybeTimedelta(fields.Raw):
     def format(self, value):
+        # 'marshal_with' is applied even when error response are given.
+        # This check ensure we pass through error messages untouched.
+        if isinstance(value, str):
+            return value
+
         if value is not None:
             return value.total_seconds()
 
@@ -34,8 +35,8 @@ claim_fields = {
     'resource': fields.String,
     'status': fields.String,
     'status_history': fields.Nested(status_history_fields),
-    'timeout': RealFloat(attribute='timeout_seconds'),
-    'ttl': RealFloat,
+    'timeout': MaybeTimedelta,
+    'ttl': MaybeTimedelta,
     'user_data': JSONEncoded,
     'waiting_duration': MaybeTimedelta,
 }

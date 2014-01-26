@@ -43,13 +43,9 @@ class Claim(Base):
     now = column_property(select([func.now()]))
 
     @property
-    def timeout_seconds(self):
-        return self.timeout.total_seconds()
-
-    @property
     def ttl(self):
         if self.lock:
-            return self.lock.ttl.total_seconds()
+            return self.lock.ttl
 
     @property
     def active_duration(self):

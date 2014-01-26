@@ -10,11 +10,6 @@ __all__ = [
 
 class MaybeTimedelta(fields.Raw):
     def format(self, value):
-        # 'marshal_with' is applied even when error response are given.
-        # This check ensure we pass through error messages untouched.
-        if isinstance(value, str):
-            return value
-
         if value is not None:
             return value.total_seconds()
 
@@ -30,7 +25,7 @@ status_history_fields = {
 }
 
 claim_fields = {
-#    'url': fields.Url(,
+    'url': fields.Url('claim', absolute=True),
     'active_duration': MaybeTimedelta,
     'created': fields.DateTime,
     'resource': fields.String,

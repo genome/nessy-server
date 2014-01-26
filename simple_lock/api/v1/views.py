@@ -1,23 +1,21 @@
 from . import request_parsers
 from .output_fields import claim_fields
-from flask import g
-from flask.ext.restful import Resource, marshal_with
+from flask import g, url_for
+from flask.ext.restful import Resource, marshal
 
 
 __all__ = ['ClaimListView', 'ClaimView']
 
 
 class ClaimListView(Resource):
-    @marshal_with(claim_fields)
     def get(self):
         data, errors = request_parsers.get_claim_list_data()
         if errors:
             return errors, 400
 
         result = g.actor.list_claims(**data)
-        return result
+        return marshal(result, claim_fields)
 
-    @marshal_with(claim_fields)
     def post(self):
         data, errors = request_parsers.get_claim_post_data()
         if errors:
@@ -28,23 +26,26 @@ class ClaimListView(Resource):
             status_code = 201
         else:
             status_code = 202
-        return claim, status_code, {'Location': '/v1/claims/%d/' % claim.id}
+        return (marshal(claim, claim_fields), status_code,
+                {'Location': _construct_claim_url(claim.id)})
+
+def _construct_claim_url(claim_id):
+    return url_for('claim', id=claim_id)
 
 
 class ClaimView(Resource):
-    @marshal_with(claim_fields)
-    def get(self, claim_id):
-        claim = g.actor.get_claim(claim_id)
+    def get(self, id):
+        claim = g.actor.get_claim(id)
         if claim:
-            return claim
+            return marshal(claim, claim_fields)
         else:
             return {'message': 'No claim found'}, 404
 
-    def patch(self, claim_id):
+    def patch(self, id):
         data, errors = request_parsers.get_claim_update_data()
         if errors:
             return errors, 400
         return '', 200
 
-    def put(self, claim_id):
-        return self.patch(claim_id)
+    def put(self, id):
+        return self.patch(id)

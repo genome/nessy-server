@@ -16,8 +16,12 @@ class SqlActorFactory(FactoryBase):
     def initialize(self):
         models.Base.metadata.create_all(self._engine)
 
-    def destroy(self):
-        models.Base.metadata.drop_all(self._engine)
+    def purge(self):
+        s = self._Session()
+        s.query(models.Lock).delete()
+        s.query(models.StatusHistory).delete()
+        s.query(models.Claim).delete()
+        s.commit()
 
     def create_actor(self):
         return actor.SqlActor(self._Session())

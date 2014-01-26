@@ -9,7 +9,7 @@ class FactoryBase(object):
         pass
 
     @abc.abstractmethod
-    def destroy(self):
+    def purge(self):
         pass
 
     @abc.abstractmethod

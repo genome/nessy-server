@@ -1,45 +1,11 @@
 from . import request_parsers
+from .output_fields import claim_fields
 from flask import g
-from flask.ext.restful import Resource, fields, marshal_with
-import simplejson
+from flask.ext.restful import Resource, marshal_with
 
 
 __all__ = ['ClaimListView', 'ClaimView']
 
-
-class MaybeTimedelta(fields.Raw):
-    def format(self, value):
-        # 'marshal_with' is applied even when error response are given.
-        # This check ensure we pass through error messages untouched.
-        if isinstance(value, str):
-            return value
-
-        if value is not None:
-            return value.total_seconds()
-
-
-class JSONEncoded(fields.Raw):
-    def format(self, value):
-        return simplejson.loads(value)
-
-
-status_history_fields = {
-    'status': fields.String,
-    'timestamp': fields.DateTime,
-}
-
-claim_fields = {
-#    'url': fields.Url(,
-    'active_duration': MaybeTimedelta,
-    'created': fields.DateTime,
-    'resource': fields.String,
-    'status': fields.String,
-    'status_history': fields.Nested(status_history_fields),
-    'timeout': MaybeTimedelta,
-    'ttl': MaybeTimedelta,
-    'user_data': JSONEncoded,
-    'waiting_duration': MaybeTimedelta,
-}
 
 class ClaimListView(Resource):
     @marshal_with(claim_fields)

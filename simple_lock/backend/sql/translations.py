@@ -1,4 +1,5 @@
 from . import models
+from sqlalchemy import func
 import datetime
 
 
@@ -22,12 +23,14 @@ def active_duration_range(query, minimum_active_duration,
         minimum_active_duration = datetime.timedelta(
                 seconds=minimum_active_duration)
         finished_claims = query.filter(
-                models.Claim._done_active_duration != None,
-                models.Claim._done_active_duration
+                models.Claim.activated != None,
+                models.Claim.deactivated != None,
+                models.Claim.deactivated - models.Claim.activated
                     >= minimum_active_duration)
         active_claims = query.filter(
-                models.Claim._live_active_duration != None,
-                models.Claim._live_active_duration
+                models.Claim.activated != None,
+                models.Claim.deactivated == None,
+                func.now() - models.Claim.activated
                     >= minimum_active_duration)
         query = finished_claims.union(active_claims)
 
@@ -35,12 +38,14 @@ def active_duration_range(query, minimum_active_duration,
         maximum_active_duration = datetime.timedelta(
                 seconds=maximum_active_duration)
         finished_claims = query.filter(
-                models.Claim._done_active_duration != None,
-                models.Claim._done_active_duration
+                models.Claim.activated != None,
+                models.Claim.deactivated != None,
+                models.Claim.deactivated - models.Claim.activated
                     <= maximum_active_duration)
         active_claims = query.filter(
-                models.Claim._live_active_duration != None,
-                models.Claim._live_active_duration
+                models.Claim.activated != None,
+                models.Claim.deactivated == None,
+                func.now() - models.Claim.activated
                     <= maximum_active_duration)
         query = finished_claims.union(active_claims)
 
@@ -54,19 +59,19 @@ def waiting_duration_range(query, minimum_waiting_duration,
                 seconds=minimum_waiting_duration)
         activated_claims = query.filter(
                 models.Claim.activated != None,
-                models.Claim._done_waiting_duration
+                models.Claim.activated - models.Claim.created
                     >= minimum_waiting_duration)
 
         deactivated_claims = query.filter(
                 models.Claim.activated == None,
                 models.Claim.deactivated != None,
-                models.Claim._skip_waiting_duration
+                models.Claim.deactivated - models.Claim.created
                     >= minimum_waiting_duration)
 
         currently_waiting_claims = query.filter(
                 models.Claim.activated == None,
                 models.Claim.deactivated == None,
-                models.Claim._still_waiting_duration
+                func.now() - models.Claim.created
                     >= minimum_waiting_duration)
 
         query = activated_claims.union(deactivated_claims,
@@ -77,19 +82,19 @@ def waiting_duration_range(query, minimum_waiting_duration,
                 seconds=maximum_waiting_duration)
         activated_claims = query.filter(
                 models.Claim.activated != None,
-                models.Claim._done_waiting_duration
+                models.Claim.activated - models.Claim.created
                     <= maximum_waiting_duration)
 
         deactivated_claims = query.filter(
                 models.Claim.activated == None,
                 models.Claim.deactivated != None,
-                models.Claim._skip_waiting_duration
+                models.Claim.deactivated - models.Claim.created
                     <= maximum_waiting_duration)
 
         currently_waiting_claims = query.filter(
                 models.Claim.activated == None,
                 models.Claim.deactivated == None,
-                models.Claim._still_waiting_duration
+                func.now() - models.Claim.created
                     <= maximum_waiting_duration)
 
         query = activated_claims.union(deactivated_claims,

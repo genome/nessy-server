@@ -90,12 +90,30 @@ class ClaimListGetFilterErrorTest(APITest):
 
 
 class ClaimListGetPaginationTest(APITest):
-    pass
+    def setUp(self):
+        super(ClaimListGetPaginationTest, self).setUp()
+        self.post_data = {
+            'resource': 'post-resource',
+            'timeout': 0.010,
+        }
 
-# TODO
-#    def test_should_respect_limit_parameter(self):
-#        pass
+    def _post_claims(self, number):
+        for i in xrange(number):
+            self.post(URL, self.post_data)
 
-# TODO
-#    def test_should_respect_offset_parameter(self):
-#        pass
+    def test_should_respect_limit_parameter(self):
+        self._post_claims(5)
+        response = self.get(URL, limit=2)
+        self.assertEqual(2, len(response.DATA))
+
+    def test_should_respect_offset_parameter(self):
+        self._post_claims(2)
+
+        full_response = self.get(URL)
+
+        offset_response = self.get(URL, offset=1)
+        self.assertEqual(1, len(offset_response.DATA))
+        self.assertEqual('waiting', offset_response.DATA[0]['status'])
+
+        self.assertNotEqual(full_response.DATA[0]['url'],
+                offset_response.DATA[0]['url'])

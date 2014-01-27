@@ -59,6 +59,8 @@ _claim_list.add_argument('minimum_active_duration', type=float, location='args')
 _claim_list.add_argument('maximum_active_duration', type=float, location='args')
 _claim_list.add_argument('minimum_waiting_duration', type=float, location='args')
 _claim_list.add_argument('maximum_waiting_duration', type=float, location='args')
+_claim_list.add_argument('minimum_ttl', type=float, location='args')
+_claim_list.add_argument('maximum_ttl', type=float, location='args')
 def get_claim_list_data():
     data = _claim_list.parse_args()
     return data, {}

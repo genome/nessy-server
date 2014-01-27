@@ -76,9 +76,40 @@ class ClaimListGetFilterSuccessTest(APITest):
         self.assertEqual(2, len(max_response.DATA))
 
 
-# TODO
-#    def test_filter_by_ttl(self):
-#        pass
+class ClaimListGetFilterTTLTest(APITest):
+    def setUp(self):
+        super(ClaimListGetFilterTTLTest, self).setUp()
+
+        self.post(URL, {
+            'resource': 'foo',
+            'timeout': 600,
+        })
+        self.post(URL, {
+            'resource': 'foo',
+            'timeout': 600,
+            'user_data': 'ignored_by_test',
+        })
+
+        self.post(URL, {
+            'resource': 'bar',
+            'timeout': 10,
+        })
+
+    def test_should_ignore_waiting_claims(self):
+        response = self.get(URL, minimum_ttl=0)
+        self.assertEqual(2, len(response.DATA))
+        for claim in response.DATA:
+            self.assertEqual('active', claim['status'])
+
+    def test_minimum_should_exclude_ttls_that_are_too_small(self):
+        response = self.get(URL, minimum_ttl=11)
+        self.assertEqual(1, len(response.DATA))
+        self.assertEqual('foo', response.DATA[0]['resource'])
+
+    def test_maximum_should_exclude_ttls_that_are_too_large(self):
+        response = self.get(URL, maximum_ttl=10)
+        self.assertEqual(1, len(response.DATA))
+        self.assertEqual('bar', response.DATA[0]['resource'])
 
 
 class ClaimListGetFilterErrorTest(APITest):

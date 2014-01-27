@@ -17,6 +17,21 @@ def status_equal(query, status):
         return query
 
 
+def ttl_range(query, minimum_ttl, maximum_ttl):
+    if minimum_ttl is not None or maximum_ttl is not None:
+        query = query.filter_by(status='active').join(models.Lock)
+
+    if minimum_ttl is not None:
+        query = query.filter(models.Lock.expiration_time - func.now()
+                >= datetime.timedelta(seconds=minimum_ttl))
+
+    if maximum_ttl is not None:
+        query = query.filter(models.Lock.expiration_time - func.now()
+                <= datetime.timedelta(seconds=maximum_ttl))
+
+    return query
+
+
 def active_duration_range(query, minimum_active_duration,
         maximum_active_duration):
     if minimum_active_duration is not None:

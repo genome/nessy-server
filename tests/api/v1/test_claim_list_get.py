@@ -9,10 +9,6 @@ URL = '/v1/claims/'
 class ClaimListGetSuccessGeneralTest(APITest):
     def setUp(self):
         super(ClaimListGetSuccessGeneralTest, self).setUp()
-        self.post_data = {
-            'resource': 'post-resource',
-            'timeout': 0.010,
-        }
         self.response = self.get(URL)
 
     def test_should_return_200(self):

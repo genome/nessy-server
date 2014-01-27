@@ -105,6 +105,10 @@ class ClaimUpdateErrorMixin(ClaimUpdateMixinBase):
         self.assertEqual(400, timeout_response.status_code)
         self.assertIn('ttl', timeout_response.data)
 
+    def test_update_with_no_parameters_should_return_400(self):
+        invalid_response = self.update(self.resource_url, {})
+        self.assertEqual(400, invalid_response.status_code)
+
 # TODO
 #    def test_non_existant_claim_should_return_404(self):
 #        pass

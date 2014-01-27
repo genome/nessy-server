@@ -47,6 +47,9 @@ def get_claim_update_data():
     if data['ttl'] is not None and data['ttl'] < 0:
         errors['ttl'] = 'Positive ttl required (in seconds)'
 
+    if all(v is None for v in data.itervalues()):
+        errors['missing-parameters'] = 'No parameters specified'
+
     return data, errors
 
 

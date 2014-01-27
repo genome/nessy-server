@@ -42,57 +42,10 @@ class Claim(Base):
 
     now = column_property(select([func.now()]))
 
-
-    @hybrid_property
-    def _done_active_duration(self):
-        return self.deactivated - self.activated
-
-    @_done_active_duration.expression
-    def _done_active_duration(cls):
-        return cls.deactivated - cls.activated
-
-    @hybrid_property
-    def _live_active_duration(self):
-        return self.now - self.activated
-
-    @_live_active_duration.expression
-    def _live_active_duration(cls):
-        return cls.now - cls.activated
-
-
-    @hybrid_property
-    def _skip_waiting_duration(self):
-        return self.deactivated - self.created
-
-    @_skip_waiting_duration.expression
-    def _skip_waiting_duration(cls):
-        return cls.deactivated - cls.created
-
-    @hybrid_property
-    def _done_waiting_duration(self):
-        return self.activated - self.created
-
-    @_done_waiting_duration.expression
-    def _done_waiting_duration(cls):
-        return cls.activated - cls.created
-
-    @hybrid_property
-    def _still_waiting_duration(self):
-        return self.now - self.created
-
-    @_still_waiting_duration.expression
-    def _still_waiting_duration(cls):
-        return cls.now - cls.created
-
-
-    @property
-    def timeout_seconds(self):
-        return self.timeout.total_seconds()
-
     @property
     def ttl(self):
         if self.lock:
-            return self.lock.ttl.total_seconds()
+            return self.lock.ttl
 
     @property
     def active_duration(self):

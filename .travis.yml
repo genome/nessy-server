@@ -7,3 +7,7 @@ before_script:
     - psql -c 'create database locking_test;' -U postgres
 script:
     - LOCKING_TEST_DB='postgres://postgres@localhost/locking_test' tox
+
+after_success:
+    - pip install coveralls
+    - coveralls

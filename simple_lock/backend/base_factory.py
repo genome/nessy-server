@@ -6,12 +6,12 @@ class FactoryBase(object):
 
     @abc.abstractmethod
     def initialize(self):
-        pass
+        pass  # pragma: no cover
 
     @abc.abstractmethod
     def purge(self):
-        pass
+        pass  # pragma: no cover
 
     @abc.abstractmethod
     def create_actor(self):
-        pass
+        pass  # pragma: no cover

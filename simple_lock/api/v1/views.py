@@ -45,7 +45,15 @@ class ClaimView(Resource):
         data, errors = request_parsers.get_claim_update_data()
         if errors:
             return errors, 400
-        return '', 200
+        try:
+            content = g.actor.update_claim(id, **data)
+            if content is None:
+                return None, 204
+            else:
+                return marshal(content, claim_fields), 200
+
+        except Exception as e:
+            raise e
 
     def put(self, id):
         return self.patch(id)

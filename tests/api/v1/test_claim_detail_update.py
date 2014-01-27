@@ -36,9 +36,10 @@ class ClaimUpdateSuccessMixin(ClaimUpdateMixinBase):
         update_response = self.update(self.resource_url, {'status': 'active'})
         self.assertEqual(200, update_response.status_code)
 
-# TODO
-#    def test_update_status_from_active_to_released_should_return_204(self):
-#        pass
+    def test_update_status_from_active_to_released_should_return_204(self):
+        update_response = self.update(self.resource_url, {'status': 'released'})
+        self.assertEqual(204, update_response.status_code)
+
 # TODO
 #    def test_update_status_from_active_to_released_should_set_status(self):
 #        pass

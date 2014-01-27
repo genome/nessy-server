@@ -74,3 +74,7 @@ class SqlActor(ActorBase):
 
     def get_claim(self, claim_id):
         return self.session.query(models.Claim).get(claim_id)
+
+    def update_claim(self, claim_id, status, ttl):
+        if status == 'active':
+            return self.session.query(models.Claim).get(claim_id)

@@ -47,12 +47,27 @@ class ClaimDetailGetGeneralSuccessTest(APITest):
     def test_should_return_url(self):
         self.assertEqual(self.url, self.response.DATA['url'])
 
-    def test_empty_user_provided_data_should_be_null(self):
-        self.assertEqual(None, self.response.DATA['user_data'])
 
-# TODO
-#    def test_should_return_metadata(self):
-#        pass
+class ClaimDetailGetSuccessUserDataTest(APITest):
+    def test_empty_user_provided_data_should_be_null(self):
+        post_response = self.post(POST_URL, {
+            'resource': 'post-resource',
+            'timeout': 0.010,
+        })
+        get_response = self.get(post_response.headers['Location'])
+        self.assertEqual(None, get_response.DATA['user_data'])
+
+    def test_should_return_metadata(self):
+        user_data = {
+            'very': ['complex', 'stuff'],
+        }
+        post_response = self.post(POST_URL, {
+            'resource': 'post-resource',
+            'timeout': 0.010,
+            'user_data': user_data,
+        })
+        get_response = self.get(post_response.headers['Location'])
+        self.assertEqual(user_data, get_response.DATA['user_data'])
 
 
 class ClaimDetailGetActiveSuccessTest(APITest):

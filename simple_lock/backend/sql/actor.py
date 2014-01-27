@@ -16,6 +16,7 @@ class SqlActor(ActorBase):
         self.session.close()
 
     def list_claims(self, limit, offset, resource, status,
+            minimum_ttl, maximum_ttl,
             minimum_active_duration, maximum_active_duration,
             minimum_waiting_duration, maximum_waiting_duration):
 
@@ -23,6 +24,8 @@ class SqlActor(ActorBase):
 
         query = translations.resource_equal(query, resource)
         query = translations.status_equal(query, status)
+
+        query = translations.ttl_range(query, minimum_ttl, maximum_ttl)
 
         query = translations.active_duration_range(query,
                 minimum_active_duration, maximum_active_duration)

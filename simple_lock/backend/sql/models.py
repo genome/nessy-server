@@ -1,7 +1,6 @@
 from sqlalchemy import Column
 from sqlalchemy import DateTime, ForeignKey, Enum, Integer, Interval, Text
 from sqlalchemy import func, select
-from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import backref, column_property, relationship
 
 import sqlalchemy.ext.declarative
@@ -95,10 +94,6 @@ class Lock(Base):
 
     now = column_property(select([func.now()]))
 
-    @hybrid_property
+    @property
     def ttl(self):
         return self.expiration_time - self.now
-
-    @ttl.expression
-    def ttl(cls):
-        return cls.expiration_time - cls.now

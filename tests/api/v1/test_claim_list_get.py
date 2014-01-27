@@ -111,9 +111,9 @@ class ClaimListGetPaginationTest(APITest):
 
         full_response = self.get(URL)
 
-        limited_response = self.get(URL, offset=1)
-        self.assertEqual(1, len(limited_response.DATA))
-        self.assertEqual('waiting', limited_response.DATA[0]['status'])
+        offset_response = self.get(URL, offset=1)
+        self.assertEqual(1, len(offset_response.DATA))
+        self.assertEqual('waiting', offset_response.DATA[0]['status'])
 
         self.assertNotEqual(full_response.DATA[0]['url'],
-                limited_response.DATA[0]['url'])
+                offset_response.DATA[0]['url'])

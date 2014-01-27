@@ -35,6 +35,8 @@ Should specify the headers:
 
 ## POST /v1/claims/
 ### Parameters
+Parameters should be specified in the JSON body.
+
 `resource`
 
 - string
@@ -85,6 +87,8 @@ Successful posts with contention should:
 
 ## PATCH or PUT /v1/claims/(id)/
 ### Parameters
+Parameters should be specified in the JSON body.
+
 `ttl`
 
 - float

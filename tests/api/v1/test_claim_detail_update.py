@@ -109,9 +109,9 @@ class ClaimUpdateErrorMixin(ClaimUpdateMixinBase):
         invalid_response = self.update(self.resource_url, {})
         self.assertEqual(400, invalid_response.status_code)
 
-# TODO
-#    def test_non_existant_claim_should_return_404(self):
-#        pass
+    def test_non_existent_claim_should_return_404(self):
+        invalid_response = self.update(URL + '-1/', {'status': 'active'})
+        self.assertEqual(404, invalid_response.status_code)
 
 # TODO
 #    def test_updating_claim_with_negative_ttl_should_return_409(self):

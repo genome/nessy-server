@@ -2,6 +2,7 @@ from . import request_parsers
 from .output_fields import claim_fields
 from flask import g, url_for
 from flask.ext.restful import Resource, marshal
+from simple_lock.backend import exceptions
 
 
 __all__ = ['ClaimListView', 'ClaimView']
@@ -52,8 +53,8 @@ class ClaimView(Resource):
             else:
                 return marshal(content, claim_fields), 200
 
-        except Exception as e:
-            raise e
+        except exceptions.ClaimNotFound as e:
+            return e.as_dict, 404
 
     def put(self, id):
         return self.patch(id)

@@ -151,9 +151,15 @@ Filters should be specified using query strings.
 
 Allowed filters:
 
+- `maximum_active_duration`
+- `maximum_created`
+- `maximum_ttl`
+- `maximum_waiting_duration`
+- `minimum_active_duration`
+- `minimum_created`
+- `minimum_ttl`
+- `minimum_waiting_duration`
 - `resource`
-- `ttl`
-- `created`
 - `status`
 
 

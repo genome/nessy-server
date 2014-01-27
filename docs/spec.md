@@ -129,6 +129,7 @@ Updating status from 'active' or 'waiting' to 'revoked' should:
         - 'revoked'
     - Updating from 'waiting' to 'released'
     - Updating ttl when status is not 'active'
+    - Updating status from 'waiting' to 'active' with contention
 
 
 ## GET /v1/claims/

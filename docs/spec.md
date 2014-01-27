@@ -38,7 +38,7 @@ timeout
 - value >= 0
 - mandatory
 
-metadata
+`user_data`
 
 - JSON-compatible blob
 - optional
@@ -48,7 +48,7 @@ All successful posts should:
 
 - set Location header
 - save user-provided data
-    - metadata
+    - `user_data`
     - resource
     - timeout
 - set automatic fields

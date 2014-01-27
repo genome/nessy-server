@@ -2,6 +2,9 @@ from ..base import APITest
 import abc
 
 
+URL = '/v1/claims/'
+
+
 class ClaimUpdateMixinBase(object):
     __metaclass__ = abc.ABCMeta
 
@@ -11,9 +14,8 @@ class ClaimUpdateMixinBase(object):
             'resource': 'update-test-resource',
             'ttl': 0.010,
         }
-        self.changed_data = {}
 
-        self.post_response = self.post('/v1/claims/', self.post_data)
+        self.post_response = self.post(URL, self.post_data)
         self.resource_url = self.post_response.headers['Location']
 
     @abc.abstractproperty
@@ -21,12 +23,12 @@ class ClaimUpdateMixinBase(object):
         pass
 
     @abc.abstractmethod
-    def method_data(self):
+    def method_data(self, data):
         pass
 
-    def update(self):
+    def update(self, url, data):
         method = getattr(self, self.method)
-        return method(self.resource_url, data=self.method_data())
+        return method(url, data=self.method_data(data))
 
 
 class ClaimUpdateSuccessMixin(ClaimUpdateMixinBase):
@@ -90,23 +92,27 @@ class ClaimUpdateErrorMixin(ClaimUpdateMixinBase):
 #        pass
 
     def test_invalid_parameters_should_return_400(self):
-        self.changed_data = { 'status': 'expired', }
-        expired_status_response = self.update()
+        expired_status_response = self.update(self.resource_url,
+                {'status': 'expired'})
         self.assertEqual(400, expired_status_response.status_code)
         self.assertIn('status', expired_status_response.data)
 
-        self.changed_data = { 'status': 'waiting', }
-        waiting_status_response = self.update()
+        waiting_status_response = self.update(self.resource_url,
+                {'status': 'waiting'})
         self.assertEqual(400, waiting_status_response.status_code)
         self.assertIn('status', waiting_status_response.data)
 
-        self.changed_data = { 'ttl': -1.7 }
-        timeout_response = self.update()
+        timeout_response = self.update(self.resource_url,
+                {'ttl': -1.7})
         self.assertEqual(400, timeout_response.status_code)
         self.assertIn('ttl', timeout_response.data)
 
 # TODO
 #    def test_non_existant_claim_should_return_404(self):
+#        pass
+
+# TODO
+#    def test_updating_claim_with_negative_ttl_should_return_409(self):
 #        pass
 
 # TODO
@@ -134,18 +140,18 @@ class ClaimUpdateErrorMixin(ClaimUpdateMixinBase):
 class ClaimDetailPatchMixin(object):
     method = 'patch'
 
-    def method_data(self):
-        return self.changed_data
+    def method_data(self, data):
+        return data
 
 class ClaimDetailPutMixin(object):
     method = 'put'
 
-    def method_data(self):
+    def method_data(self, data):
         put_data = {
             'ttl': 0.010,
             'status': 'waiting',
         }
-        put_data.update(self.changed_data)
+        put_data.update(data)
         return put_data
 
 

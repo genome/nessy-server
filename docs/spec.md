@@ -24,6 +24,15 @@ OAuth and Shibboleth.
   `waiting_duration`)
 - 'revoked' `status` is optional (may use 'expired' instead)
 
+
+## HTTP Requests
+
+Should specify the headers:
+
+    Content-Type: application/json
+    Accepts: application/json
+
+
 ## POST /v1/claims/
 ### Parameters
 `resource`

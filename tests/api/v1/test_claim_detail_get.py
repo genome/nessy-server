@@ -57,7 +57,7 @@ class ClaimDetailGetSuccessUserDataTest(APITest):
         get_response = self.get(post_response.headers['Location'])
         self.assertEqual(None, get_response.DATA['user_data'])
 
-    def test_should_return_metadata(self):
+    def test_should_return_user_data(self):
         user_data = {
             'very': ['complex', 'stuff'],
         }

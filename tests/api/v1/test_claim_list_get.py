@@ -108,6 +108,12 @@ class ClaimListGetPaginationTest(APITest):
 
     def test_should_respect_offset_parameter(self):
         self._post_claims(2)
-        response = self.get(URL, offset=1)
-        self.assertEqual(1, len(response.DATA))
-        self.assertEqual('waiting', response.DATA[0]['status'])
+
+        full_response = self.get(URL)
+
+        limited_response = self.get(URL, offset=1)
+        self.assertEqual(1, len(limited_response.DATA))
+        self.assertEqual('waiting', limited_response.DATA[0]['status'])
+
+        self.assertNotEqual(full_response.DATA[0]['url'],
+                limited_response.DATA[0]['url'])

@@ -12,7 +12,7 @@ class ClaimUpdateMixinBase(object):
         super(ClaimUpdateMixinBase, self).setUp()
         self.post_data = {
             'resource': 'update-test-resource',
-            'ttl': 0.010,
+            'ttl': 20,
         }
 
         self.post_response = self.post(URL, self.post_data)
@@ -55,13 +55,19 @@ class ClaimUpdateSuccessMixin(ClaimUpdateMixinBase):
         self.assertEqual('revoked', get_response.DATA['status'])
 
 
-# TODO
-#    def test_update_status_from_waiting_to_active_should_return_200(self):
-#        pass
+    def test_update_status_from_waiting_to_active_should_return_200(self):
+        second_post_response = self.post(URL, self.post_data)
+        self.update(self.resource_url, {'status': 'released'})
+        update_response = self.update(second_post_response.headers['Location'],
+                {'status': 'active'})
+        self.assertEqual(200, update_response.status_code)
 
-# TODO
-#    def test_update_status_from_waiting_to_active_should_set_status(self):
-#        pass
+    def test_update_status_from_waiting_to_active_should_set_status(self):
+        second_post_response = self.post(URL, self.post_data)
+        self.update(self.resource_url, {'status': 'released'})
+        update_response = self.update(second_post_response.headers['Location'],
+                {'status': 'active'})
+        self.assertEqual('active', update_response.DATA['status'])
 
 # TODO
 #    def test_update_status_from_waiting_to_active_should_set_ttl(self):

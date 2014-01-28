@@ -22,3 +22,7 @@ class ActorBase(object):
     @abc.abstractmethod
     def get_claim(self, claim_id):
         pass  # pragma: no cover
+
+    @abc.abstractmethod
+    def update_claim(self, claim_id, status, ttl):
+        pass  # pragma: no cover

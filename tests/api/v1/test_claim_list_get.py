@@ -23,22 +23,21 @@ class ClaimListGetFilterSuccessTest(APITest):
         super(ClaimListGetFilterSuccessTest, self).setUp()
 
         self.resources = ['foo', 'bar']
-        self.timeouts = [1, 10, 100]
+        self.user_data = ['a', 'b', 'c']
 
-        for resource, ttl in itertools.product(self.resources,
-                self.timeouts):
+        for resource, user_data in itertools.product(self.resources,
+                self.user_data):
             self.post(URL, {
                 'resource': resource,
-                'ttl': ttl,
+                'user_data': user_data,
+                'ttl': 10,
             })
 
     def test_filter_by_resource(self):
         response = self.get(URL, resource='foo')
         self.assertEqual(3, len(response.DATA))
-        actual_ttls = [c['ttl'] for c in response.DATA]
-        self.assertGreaterEqual(1, actual_ttls[0])
-        self.assertIsNone(actual_ttls[1])
-        self.assertIsNone(actual_ttls[2])
+        actual_user_data = sorted(c['user_data'] for c in response.DATA)
+        self.assertEqual(self.user_data, actual_user_data)
 
     def test_filter_by_status(self):
         active_response = self.get(URL, status='active')

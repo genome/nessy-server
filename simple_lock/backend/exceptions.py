@@ -6,3 +6,6 @@ class BackendException(Exception):
 
 class ClaimNotFound(BackendException):
     pass
+
+class ConflictException(BackendException):
+    pass

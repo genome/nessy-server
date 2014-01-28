@@ -78,13 +78,15 @@ class SqlActor(ActorBase):
 
     def update_claim(self, claim_id, status, ttl):
         claim = self.session.query(models.Claim).get(claim_id)
+
         if claim is None:
             raise exceptions.ClaimNotFound(claim_id=claim_id)
 
-        self.session.query(models.Claim).filter_by(
-                id=claim_id).update({'status': status})
-        claim.status_history.append(models.StatusHistory(status=status))
-        self.session.commit()
-
         if status == 'active':
-            return claim
+            return claim.activate()
+        elif status == 'released':
+            claim.release()
+            return
+        elif status == 'revoked':
+            claim.revoke()
+            return

@@ -1,10 +1,10 @@
-from sqlalchemy import Column
+from ..exceptions import ConflictException
+from sqlalchemy import Column, UniqueConstraint
 from sqlalchemy import DateTime, ForeignKey, Enum, Integer, Interval, Text
 from sqlalchemy import func, select
 from sqlalchemy.orm import backref, column_property, relationship
-
-import sqlalchemy.ext.declarative
 import datetime
+import sqlalchemy.ext.declarative
 
 
 __all__ = ['Base', 'Claim', 'StatusHistory', 'Lock']
@@ -63,9 +63,83 @@ class Claim(Base):
         else:
             return self.now - self.created
 
+    def activate(self):
+        inspector = sqlalchemy.inspection.inspect(self)
+        session = inspector.session
+
+        query = session.query(Claim
+                ).filter_by(id=self.id
+                ).with_for_update()
+        locked_claim = query.one()
+
+        if locked_claim.status == 'active':
+            session.rollback()
+        elif locked_claim.status == 'waiting':
+            locked_claim.status = 'active'
+            locked_claim.status_history.append(
+                    StatusHistory(status='active'))
+            session.commit()
+        else:
+            session.rollback()
+            raise ConflictException(claim_id=self.id,
+                    status=locked_claim.status,
+                    message='Invalid status for activation')
+
+        return locked_claim
+
+    def expire(self):
+        pass
+
+    def release(self):
+        inspector = sqlalchemy.inspection.inspect(self)
+        session = inspector.session
+
+        query = session.query(Claim
+                ).filter_by(id=self.id
+                ).with_for_update()
+        locked_claim = query.one()
+
+        if locked_claim.status == 'active':
+            locked_claim.status = 'released'
+            locked_claim.status_history.append(
+                    StatusHistory(status='released'))
+            session.commit()
+            # TODO add lock
+        else:
+            session.rollback()
+            raise ConflictException(claim_id=self.id,
+                    status=locked_claim.status,
+                    message='Invalid status for release')
+
+        return locked_claim
+
+    def revoke(self):
+        inspector = sqlalchemy.inspection.inspect(self)
+        session = inspector.session
+
+        query = session.query(Claim
+                ).filter_by(id=self.id
+                ).with_for_update()
+        locked_claim = query.one()
+
+        if locked_claim.status in ['active', 'waiting']:
+            locked_claim.status = 'revoked'
+            locked_claim.status_history.append(
+                    StatusHistory(status='revoked'))
+            session.commit()
+            # TODO delete lock
+        else:
+            session.rollback()
+            raise ConflictException(claim_id=self.id,
+                    status=locked_claim.status,
+                    message='Invalid status for revoke')
+
 
 class StatusHistory(Base):
     __tablename__ = 'status_history'
+    __table_args__ = (
+            UniqueConstraint('claim_id', 'status'),
+            )
 
     id = Column(Integer, primary_key=True)
     timestamp = Column(DateTime(timezone=True), default=func.now(),

@@ -143,9 +143,11 @@ class ClaimUpdateErrorMixin(ClaimUpdateMixinBase):
             response = self.update(self.resource_url, {'status': status})
             self.assertEqual(409, response.status_code)
 
-# TODO
-#    def test_updating_status_from_waiting_to_released_should_return_409(self):
-#        pass
+    def test_updating_status_from_waiting_to_released_should_return_409(self):
+        second_post_response = self.post(URL, self.post_data)
+        response = self.update(second_post_response.headers['Location'],
+                {'status': 'released'})
+        self.assertEqual(409, response.status_code)
 
 # TODO
 #    def test_updating_ttl_when_status_not_active_should_return_409(self):

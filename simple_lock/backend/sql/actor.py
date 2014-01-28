@@ -80,5 +80,10 @@ class SqlActor(ActorBase):
         claim = self.session.query(models.Claim).get(claim_id)
         if claim is None:
             raise exceptions.ClaimNotFound(claim_id=claim_id)
-        if status == 'active':
+        if status == 'released':
+            self.session.query(models.Claim).filter_by(
+                    id=claim_id).update({'status': 'released'})
+            claim.status_history.append(models.StatusHistory(status='released'))
+            self.session.commit()
+        elif status == 'active':
             return claim

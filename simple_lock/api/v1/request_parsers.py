@@ -1,4 +1,3 @@
-from . import exceptions
 from flask.ext.restful import reqparse
 import simplejson
 

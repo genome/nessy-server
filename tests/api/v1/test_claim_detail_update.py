@@ -136,9 +136,12 @@ class ClaimUpdateErrorMixin(ClaimUpdateMixinBase):
             response = self.update(self.resource_url, {'status': status})
             self.assertEqual(409, response.status_code)
 
-# TODO
-#    def test_updating_revoked_claim_should_return_409(self):
-#        pass
+    def test_updating_revoked_claim_should_return_409(self):
+        self.update(self.resource_url, {'status': 'revoked'})
+        statuses = ['active', 'released', 'revoked']
+        for status in statuses:
+            response = self.update(self.resource_url, {'status': status})
+            self.assertEqual(409, response.status_code)
 
 # TODO
 #    def test_updating_status_from_waiting_to_released_should_return_409(self):

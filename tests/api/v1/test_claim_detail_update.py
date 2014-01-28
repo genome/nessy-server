@@ -78,9 +78,11 @@ class ClaimUpdateSuccessMixin(ClaimUpdateMixinBase):
 #        pass
 
 
-# TODO
-#    def test_update_status_from_waiting_to_revoked_should_return_204(self):
-#        pass
+    def test_update_status_from_waiting_to_revoked_should_return_204(self):
+        second_post_response = self.post(URL, self.post_data)
+        response = self.update(second_post_response.headers['Location'],
+                {'status': 'revoked'})
+        self.assertEqual(204, response.status_code)
 
 
 # TODO

@@ -13,7 +13,7 @@ class ClaimDetailGetGeneralSuccessTest(APITest):
         super(ClaimDetailGetGeneralSuccessTest, self).setUp()
         self.post_data = {
             'resource': 'post-resource',
-            'timeout': 0.010,
+            'ttl': 0.010,
         }
         self.post_response = self.post(POST_URL, self.post_data)
         self.url = self.post_response.headers['Location']
@@ -40,9 +40,10 @@ class ClaimDetailGetGeneralSuccessTest(APITest):
         self.assertEqual(['waiting', 'active'],
                 [sh['status'] for sh in status_history])
 
-    def test_should_return_timeout(self):
-        self.assertEqual(self.post_data['timeout'],
-                self.response.DATA['timeout'])
+    def test_should_return_ttl(self):
+        self.assertIsInstance(self.response.DATA['ttl'], float)
+        self.assertGreaterEqual(self.post_data['ttl'],
+                self.response.DATA['ttl'])
 
     def test_should_return_url(self):
         self.assertEqual(self.url, self.response.DATA['url'])
@@ -52,7 +53,7 @@ class ClaimDetailGetSuccessUserDataTest(APITest):
     def test_empty_user_provided_data_should_be_null(self):
         post_response = self.post(POST_URL, {
             'resource': 'post-resource',
-            'timeout': 0.010,
+            'ttl': 0.010,
         })
         get_response = self.get(post_response.headers['Location'])
         self.assertEqual(None, get_response.DATA['user_data'])
@@ -63,7 +64,7 @@ class ClaimDetailGetSuccessUserDataTest(APITest):
         }
         post_response = self.post(POST_URL, {
             'resource': 'post-resource',
-            'timeout': 0.010,
+            'ttl': 0.010,
             'user_data': user_data,
         })
         get_response = self.get(post_response.headers['Location'])
@@ -75,7 +76,7 @@ class ClaimDetailGetActiveSuccessTest(APITest):
         super(ClaimDetailGetActiveSuccessTest, self).setUp()
         self.post_data = {
             'resource': 'post-resource',
-            'timeout': 0.010,
+            'ttl': 0.010,
         }
         self.post_response = self.post(POST_URL, self.post_data)
         self.url = self.post_response.headers['Location']
@@ -83,7 +84,7 @@ class ClaimDetailGetActiveSuccessTest(APITest):
 
     def test_should_return_ttl(self):
         self.assertIsInstance(self.response.DATA['ttl'], float)
-        self.assertGreaterEqual(self.post_data['timeout'],
+        self.assertGreaterEqual(self.post_data['ttl'],
                 self.response.DATA['ttl'])
 
     def test_should_return_active_duration(self):
@@ -98,7 +99,7 @@ class ClaimDetailGetWaitingSuccessTest(APITest):
         super(ClaimDetailGetWaitingSuccessTest, self).setUp()
         self.post_data = {
             'resource': 'post-resource',
-            'timeout': 0.010,
+            'ttl': 0.010,
         }
         self.first_post_response = self.post(POST_URL, self.post_data)
         self.second_post_response = self.post(POST_URL, self.post_data)

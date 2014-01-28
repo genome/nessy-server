@@ -11,7 +11,7 @@ def pass_through_type(value):
 
 _claim_post = reqparse.RequestParser()
 _claim_post.add_argument('resource', type=str)
-_claim_post.add_argument('timeout', type=float)
+_claim_post.add_argument('ttl', type=float)
 _claim_post.add_argument('user_data', type=pass_through_type)
 def get_claim_post_data():
     data = _claim_post.parse_args()
@@ -20,10 +20,10 @@ def get_claim_post_data():
 
     if data['resource'] is None or data['resource'] == '':
         errors['resource'] = 'No resource specified'
-    if data['timeout'] is None:
-        errors['timeout'] = 'No timeout specified'
-    elif data['timeout'] < 0:
-        errors['timeout'] = 'Positive timeout required (in seconds)'
+    if data['ttl'] is None:
+        errors['ttl'] = 'No ttl specified'
+    elif data['ttl'] < 0:
+        errors['ttl'] = 'Positive ttl required (in seconds)'
 
     try:
         data['user_data'] = simplejson.dumps(data['user_data'])
@@ -34,7 +34,7 @@ def get_claim_post_data():
 
 
 _claim_update = reqparse.RequestParser()
-_claim_update.add_argument('timeout', type=float)
+_claim_update.add_argument('ttl', type=float)
 _claim_update.add_argument('status', type=str)
 def get_claim_update_data():
     data = _claim_update.parse_args()
@@ -44,8 +44,8 @@ def get_claim_update_data():
     if data['status'] is not None:
         if data['status'] not in ['active', 'released', 'revoked']:
             errors['status'] = 'Invalid value for status'
-    if data['timeout'] is not None and data['timeout'] < 0:
-        errors['timeout'] = 'Positive timeout required (in seconds)'
+    if data['ttl'] is not None and data['ttl'] < 0:
+        errors['ttl'] = 'Positive ttl required (in seconds)'
 
     return data, errors
 

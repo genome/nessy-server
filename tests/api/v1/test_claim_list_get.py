@@ -25,19 +25,20 @@ class ClaimListGetFilterSuccessTest(APITest):
         self.resources = ['foo', 'bar']
         self.timeouts = [1, 10, 100]
 
-        for resource, timeout in itertools.product(self.resources,
+        for resource, ttl in itertools.product(self.resources,
                 self.timeouts):
             self.post(URL, {
                 'resource': resource,
-                'timeout': timeout,
+                'ttl': ttl,
             })
 
     def test_filter_by_resource(self):
         response = self.get(URL, resource='foo')
         self.assertEqual(3, len(response.DATA))
-        for expected_timeout, actual_timeout in itertools.izip(self.timeouts,
-                sorted(c['timeout'] for c in response.DATA)):
-            self.assertEqual(expected_timeout, actual_timeout)
+        actual_ttls = [c['ttl'] for c in response.DATA]
+        self.assertGreaterEqual(1, actual_ttls[0])
+        self.assertIsNone(actual_ttls[1])
+        self.assertIsNone(actual_ttls[2])
 
     def test_filter_by_status(self):
         active_response = self.get(URL, status='active')
@@ -78,17 +79,17 @@ class ClaimListGetFilterTTLTest(APITest):
 
         self.post(URL, {
             'resource': 'foo',
-            'timeout': 600,
+            'ttl': 600,
         })
         self.post(URL, {
             'resource': 'foo',
-            'timeout': 600,
+            'ttl': 600,
             'user_data': 'ignored_by_test',
         })
 
         self.post(URL, {
             'resource': 'bar',
-            'timeout': 10,
+            'ttl': 10,
         })
 
     def test_should_ignore_waiting_claims(self):
@@ -121,7 +122,7 @@ class ClaimListGetPaginationTest(APITest):
         super(ClaimListGetPaginationTest, self).setUp()
         self.post_data = {
             'resource': 'post-resource',
-            'timeout': 0.010,
+            'ttl': 0.010,
         }
 
     def _post_claims(self, number):

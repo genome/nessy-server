@@ -35,9 +35,9 @@ class SqlActor(ActorBase):
         query = query.limit(limit).offset(offset)
         return query.all()
 
-    def create_claim(self, resource, timeout, user_data):
+    def create_claim(self, resource, ttl, user_data):
         claim = models.Claim(resource=resource,
-                timeout=datetime.timedelta(seconds=timeout),
+                initial_ttl=datetime.timedelta(seconds=ttl),
                 user_data=user_data, status='waiting')
         claim.status_history.append(models.StatusHistory(status='waiting'))
         self.session.add(claim)
@@ -56,7 +56,7 @@ class SqlActor(ActorBase):
                     ).order_by(models.Claim.created).first()
             if claim is not None:
                 lock = models.Lock(claim=claim, resource=resource,
-                        expiration_time=claim.now + claim.timeout)
+                        expiration_time=claim.now + claim.initial_ttl)
                 claim.status = 'active'
                 claim.activated = claim.now
                 claim.status_history.append(

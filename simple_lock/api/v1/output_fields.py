@@ -31,7 +31,6 @@ claim_fields = {
     'resource': fields.String,
     'status': fields.String,
     'status_history': fields.Nested(status_history_fields),
-    'timeout': MaybeTimedelta,
     'ttl': MaybeTimedelta,
     'user_data': JSONEncoded,
     'waiting_duration': MaybeTimedelta,

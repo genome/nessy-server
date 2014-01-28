@@ -16,7 +16,7 @@ class ActorBase(object):
         pass  # pragma: no cover
 
     @abc.abstractmethod
-    def create_claim(self, resource, timeout, user_data):
+    def create_claim(self, resource, ttl, user_data):
         pass  # pragma: no cover
 
     @abc.abstractmethod

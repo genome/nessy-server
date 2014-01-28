@@ -8,7 +8,7 @@ class ClaimListPostGeneralSuccessTest(APITest):
         super(ClaimListPostGeneralSuccessTest, self).setUp()
         self.post_data = {
             'resource': 'post-resource',
-            'timeout': 0.010,
+            'ttl': 0.010,
             'user_data': {
                 'foo': 'bar',
                 'baz': 42,
@@ -35,7 +35,7 @@ class ClaimListPostSuccessWithoutContentionTest(APITest):
         super(ClaimListPostSuccessWithoutContentionTest, self).setUp()
         self.post_data = {
             'resource': 'post-resource',
-            'timeout': 1,
+            'ttl': 1,
         }
         self.response = self.post(URL, self.post_data)
 
@@ -48,7 +48,7 @@ class ClaimListPostSuccessWithoutContentionTest(APITest):
     def test_should_set_ttl_to_timeout(self):
         self.assertIsNotNone(self.response.DATA['ttl'])
         self.assertLessEqual(self.response.DATA['ttl'],
-                self.post_data['timeout'])
+                self.post_data['ttl'])
         self.assertGreaterEqual(self.response.DATA['ttl'], 0)
 
 
@@ -57,7 +57,7 @@ class ClaimListPostSuccessWithContentionTest(APITest):
         super(ClaimListPostSuccessWithContentionTest, self).setUp()
         self.post_data = {
             'resource': 'post-resource',
-            'timeout': 0.010,
+            'ttl': 0.010,
         }
         self.first_response = self.post(URL, self.post_data)
         self.second_response = self.post(URL, self.post_data)
@@ -74,36 +74,36 @@ class ClaimListPostErrorTest(APITest):
         no_params_response = self.post(URL, data={})
         self.assertEqual(400, no_params_response.status_code)
         self.assertIn('resource', no_params_response.DATA)
-        self.assertIn('timeout', no_params_response.DATA)
+        self.assertIn('ttl', no_params_response.DATA)
 
-        no_resource_response = self.post(URL, {'timeout': 1.2})
+        no_resource_response = self.post(URL, {'ttl': 1.2})
         self.assertEqual(400, no_resource_response.status_code)
         self.assertIn('resource', no_resource_response.DATA)
 
         no_timeout_response = self.post(URL, {'resource': 'foo'})
         self.assertEqual(400, no_timeout_response.status_code)
-        self.assertIn('timeout', no_timeout_response.DATA)
+        self.assertIn('ttl', no_timeout_response.DATA)
 
     def test_invalid_parameter_values_should_return_400(self):
         empty_resource_response = self.post(URL, {
             'resource': '',
-            'timeout': 1.2,
+            'ttl': 1.2,
         })
         self.assertEqual(400, empty_resource_response.status_code)
         self.assertIn('resource', empty_resource_response.DATA)
 
         negative_timeout_response = self.post(URL, {
             'resource': 'foo',
-            'timeout': -1.2,
+            'ttl': -1.2,
         })
         self.assertEqual(400, negative_timeout_response.status_code)
-        self.assertIn('timeout', negative_timeout_response.DATA)
+        self.assertIn('ttl', negative_timeout_response.DATA)
 
 # TODO
 #    def test_unknown_parameters_should_return_400(self):
 #        unknown_param_response = self.post(URL, data={
 #            'resource': 'foo',
-#            'timeout': 1.2,
+#            'ttl': 1.2,
 #            'unknown_param': 'enigma',
 #        })
 #        self.assertEqual(400, unknown_param_response.status_code)

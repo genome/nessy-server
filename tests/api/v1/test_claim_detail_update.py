@@ -9,7 +9,7 @@ class ClaimUpdateMixinBase(object):
         super(ClaimUpdateMixinBase, self).setUp()
         self.post_data = {
             'resource': 'update-test-resource',
-            'timeout': 0.010,
+            'ttl': 0.010,
         }
         self.changed_data = {}
 
@@ -100,10 +100,10 @@ class ClaimUpdateErrorMixin(ClaimUpdateMixinBase):
         self.assertEqual(400, waiting_status_response.status_code)
         self.assertIn('status', waiting_status_response.data)
 
-        self.changed_data = { 'timeout': -1.7 }
+        self.changed_data = { 'ttl': -1.7 }
         timeout_response = self.update()
         self.assertEqual(400, timeout_response.status_code)
-        self.assertIn('timeout', timeout_response.data)
+        self.assertIn('ttl', timeout_response.data)
 
 # TODO
 #    def test_non_existant_claim_should_return_404(self):
@@ -142,7 +142,7 @@ class ClaimDetailPutMixin(object):
 
     def method_data(self):
         put_data = {
-            'timeout': 0.010,
+            'ttl': 0.010,
             'status': 'waiting',
         }
         put_data.update(self.changed_data)

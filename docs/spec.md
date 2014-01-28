@@ -20,7 +20,7 @@ OAuth and Shibboleth.
 
 
 ## Miscellaneous Details
-- times should be in seconds as floats (`timeout`, `ttl`, `active_duration`,
+- times should be in seconds as floats (`ttl`, `active_duration`,
   `waiting_duration`)
 - 'revoked' `status` is optional (may use 'expired' instead)
 
@@ -43,7 +43,7 @@ Parameters should be specified in the JSON body.
 - length > 0
 - mandatory
 
-`timeout`
+`ttl`
 
 - float
 - seconds
@@ -62,7 +62,7 @@ All successful posts should:
 - save user-provided data
     - `user_data`
     - `resource`
-    - `timeout`
+    - initial `ttl`
 - set automatic fields
     - `created`
     - `status`
@@ -71,7 +71,7 @@ Successful posts without contention should:
 
 - return HTTP 201 (OK)
 - set `status` to 'active'
-- set `ttl` to `timeout`
+- initialize `ttl`
 
 Successful posts with contention should:
 
@@ -94,11 +94,6 @@ Parameters should be specified in the JSON body.
 - float
 - value >= 0
 
-`timeout`
-
-- float
-- value >= 0
-
 `status`
 
 - string
@@ -109,7 +104,7 @@ Updating `status` from 'waiting' to 'active' without contention should:
 
 - return HTTP 200 (OK)
 - set `status` to 'active'
-- set `ttl` to `timeout`
+- initialize `ttl`
 
 Updating `status` from 'active' to 'active' should:
 
@@ -173,7 +168,6 @@ All successful get requests should return:
 - `resource`
 - `status`
 - `status_history`
-- `timeout`
 
 Requests for 'active' claims should return:
 

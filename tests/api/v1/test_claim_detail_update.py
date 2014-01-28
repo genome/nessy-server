@@ -45,9 +45,9 @@ class ClaimUpdateSuccessMixin(ClaimUpdateMixinBase):
         get_response = self.get(self.resource_url)
         self.assertEqual('released', get_response.DATA['status'])
 
-# TODO
-#    def test_update_status_from_active_to_revoked_should_return_204(self):
-#        pass
+    def test_update_status_from_active_to_revoked_should_return_204(self):
+        update_response = self.update(self.resource_url, {'status': 'revoked'})
+        self.assertEqual(204, update_response.status_code)
 
 # TODO
 #    def test_update_status_from_active_to_revoked_should_set_status(self):

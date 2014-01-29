@@ -1,2 +1,6 @@
 [run]
 omit = simple_lock/api/wsgi.py
+branch = True
+
+[report]
+show_missing = True

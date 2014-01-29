@@ -109,11 +109,9 @@ class ClaimListGetFilterTTLTest(APITest):
 
 
 class ClaimListGetFilterErrorTest(APITest):
-    pass
-
-# TODO
-#    def test_invalid_filter_parameter_should_return_400(self):
-#        pass
+    def test_invalid_filter_parameter_should_return_400(self):
+        response = self.get(URL, minimum_ttl='foo')
+        self.assertEqual(400, response.status_code)
 
 
 class ClaimListGetPaginationTest(APITest):

@@ -69,6 +69,8 @@ class Claim(Base):
 
     def update_ttl(self, new_ttl):
         session = self.get_session()
+        self._expire_owning_claim(session)
+
         count = session.query(Lock).filter_by(claim_id=self.id).update({
             'expiration_time':
                 func.now() + datetime.timedelta(seconds=new_ttl)},

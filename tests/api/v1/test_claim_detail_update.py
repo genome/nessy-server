@@ -1,4 +1,5 @@
 from ..base import APITest
+import time
 
 
 URL = '/v1/claims/'
@@ -122,9 +123,11 @@ class ClaimPatchError(ClaimPatchBase):
         invalid_response = self.patch(self.resource_url, {'ttl': -7})
         self.assertEqual(400, invalid_response.status_code)
 
-# TODO
-#    def test_updating_expired_claim_should_return_409(self):
-#        pass
+    def test_updating_expired_claim_should_return_409(self):
+        self.patch(self.resource_url, {'ttl': 0.005})
+        time.sleep(0.005)
+        expired_response = self.patch(self.resource_url, {'ttl': 600})
+        self.assertEqual(409, expired_response.status_code)
 
     def test_updating_released_claim_should_return_409(self):
         self.patch(self.resource_url, {'status': 'released'})

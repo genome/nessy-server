@@ -31,6 +31,14 @@ class ClaimPatchSuccess(ClaimPatchBase):
         get_response = self.get(self.resource_url)
         self.assertEqual('released', get_response.DATA['status'])
 
+    def test_update_status_to_released_should_finalize_active_duration(self):
+        update_response = self.patch(self.resource_url, {'status': 'released'})
+        first_get_response = self.get(self.resource_url)
+        time.sleep(0.010)
+        second_get_response = self.get(self.resource_url)
+        self.assertEqual(first_get_response.DATA['active_duration'],
+                second_get_response.DATA['active_duration'])
+
     def test_update_status_from_active_to_revoked_should_return_204(self):
         update_response = self.patch(self.resource_url, {'status': 'revoked'})
         self.assertEqual(204, update_response.status_code)
@@ -40,6 +48,23 @@ class ClaimPatchSuccess(ClaimPatchBase):
         get_response = self.get(self.resource_url)
         self.assertEqual('revoked', get_response.DATA['status'])
 
+    def test_update_status_from_active_to_revoked_should_finalize_active_duration(self):
+        update_response = self.patch(self.resource_url, {'status': 'revoked'})
+        first_get_response = self.get(self.resource_url)
+        time.sleep(0.010)
+        second_get_response = self.get(self.resource_url)
+        self.assertEqual(first_get_response.DATA['active_duration'],
+                second_get_response.DATA['active_duration'])
+
+    def test_update_status_from_waiting_to_revoked_should_finalize_waiting_duration(self):
+        second_post_response = self.post(URL, self.post_data)
+        url = second_post_response.headers['Location']
+        update_response = self.patch(url, {'status': 'revoked'})
+        first_get_response = self.get(url)
+        time.sleep(0.010)
+        second_get_response = self.get(url)
+        self.assertEqual(first_get_response.DATA['waiting_duration'],
+                second_get_response.DATA['waiting_duration'])
 
     def test_update_status_from_waiting_to_active_should_return_200(self):
         second_post_response = self.post(URL, self.post_data)

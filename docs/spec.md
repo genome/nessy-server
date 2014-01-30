@@ -85,9 +85,10 @@ Successful posts with contention should:
     - Unknown parameters
 
 
-## PATCH or PUT /v1/claims/(id)/
+## PATCH /v1/claims/(id)/
 ### Parameters
-Parameters should be specified in the JSON body.
+Parameters should be specified in the JSON body.  Only one update parameter may
+be specified in a single request.
 
 `ttl`
 

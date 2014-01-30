@@ -27,7 +27,8 @@ class Claim(Base):
     id = Column(Integer, primary_key=True)
     resource = Column(Text, index=True, nullable=False)
     initial_ttl = Column(Interval, index=True, nullable=False)
-    status = Column(Enum(*_VALID_STATUSES, name='foo'), index=True, nullable=False)
+    status = Column(Enum(*_VALID_STATUSES, name='foo'), index=True,
+            nullable=False)
 
     created = Column(DateTime(timezone=True), index=True, default=func.now(),
             nullable=False)

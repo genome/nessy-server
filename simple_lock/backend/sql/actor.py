@@ -44,34 +44,11 @@ class SqlActor(ActorBase):
         self.session.add(claim)
         self.session.commit()
 
-        owning_claim = self._promote_resource(resource)
+        owning_claim = claim.promote_resource(self.session)
         if owning_claim is not None and claim.id == owning_claim.id:
             return owning_claim, True
         else:
             return claim, False
-
-    def _promote_resource(self, resource):
-        try:
-            claim = self.session.query(models.Claim
-                    ).filter_by(resource=resource, status='waiting',
-                    ).order_by(models.Claim.created).first()
-            if claim is not None:
-                lock = models.Lock(claim=claim, resource=resource,
-                        expiration_time=claim.now + claim.initial_ttl)
-                claim.status = 'active'
-                claim.activated = claim.now
-                claim.status_history.append(
-                        models.StatusHistory(status='active'))
-                self.session.add(lock)
-                self.session.commit()
-
-        except sqlalchemy.exc.IntegrityError:
-            self.session.rollback()
-
-        lock = self.session.query(models.Lock
-                ).filter_by(resource=resource).first()
-        if lock:
-            return lock.claim
 
     def get_claim(self, claim_id):
         return self.session.query(models.Claim).get(claim_id)

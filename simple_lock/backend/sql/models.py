@@ -63,59 +63,67 @@ class Claim(Base):
         else:
             return self.now - self.created
 
-    def activate(self):
+    def get_session(self):
         inspector = sqlalchemy.inspection.inspect(self)
-        session = inspector.session
+        return inspector.session
 
-        query = session.query(Claim
-                ).filter_by(id=self.id
-                ).with_for_update()
-        locked_claim = query.one()
+    def promote_resource(self, session):
+        try:
+            claim = session.query(Claim
+                    ).filter_by(resource=self.resource, status='waiting',
+                    ).order_by(Claim.created).first()
+            if claim is not None:
+                lock = Lock(claim=claim, resource=self.resource,
+                        expiration_time=claim.now + claim.initial_ttl)
+                claim.status = 'active'
+                claim.activated = claim.now
+                claim.status_history.append(
+                        StatusHistory(status='active'))
+                session.add(lock)
+                session.commit()
 
-        if locked_claim.status == 'active':
+        except sqlalchemy.exc.IntegrityError:
             session.rollback()
-        elif locked_claim.status == 'waiting':
-            locked_claim.status = 'active'
-            locked_claim.status_history.append(
-                    StatusHistory(status='active'))
-            session.commit()
+
+        lock = session.query(Lock
+                ).filter_by(resource=self.resource).first()
+        if lock:
+            return lock.claim
+
+    def activate(self):
+        session = self.get_session()
+        owner = self.promote_resource(session)
+
+        if owner is not None:
+            if owner.id == self.id:
+                return owner
+
+            else:
+                raise ConflictException(active_claim_id=owner.id,
+                        message='Resource is locked by another claim')
+
         else:
-            session.rollback()
-            raise ConflictException(claim_id=self.id,
-                    status=locked_claim.status,
-                    message='Invalid status for activation')
-
-        return locked_claim
-
-    def expire(self):
-        pass
+            raise ConflictException(
+                message='Found no eligible claims for activating resource:  %s'
+                % self.resource)
 
     def release(self):
-        inspector = sqlalchemy.inspection.inspect(self)
-        session = inspector.session
+        session = self.get_session()
 
-        query = session.query(Claim
-                ).filter_by(id=self.id
-                ).with_for_update()
-        locked_claim = query.one()
+        count = session.query(Lock).filter_by(claim_id=self.id).delete()
+        if count != 1:
+            raise ConflictException(claim_id=self.id, status=self.status,
+                    message='Failed to remove lock.')
 
-        if locked_claim.status == 'active':
-            locked_claim.status = 'released'
-            locked_claim.status_history.append(
-                    StatusHistory(status='released'))
-            session.commit()
-            # TODO add lock
-        else:
-            session.rollback()
-            raise ConflictException(claim_id=self.id,
-                    status=locked_claim.status,
-                    message='Invalid status for release')
+        self.status = 'released'
+        self.status_history.append(StatusHistory(status='released'))
 
-        return locked_claim
+        session.commit()
+
+        return self
 
     def revoke(self):
-        inspector = sqlalchemy.inspection.inspect(self)
-        session = inspector.session
+        session = self.get_session()
 
         query = session.query(Claim
                 ).filter_by(id=self.id
@@ -126,8 +134,9 @@ class Claim(Base):
             locked_claim.status = 'revoked'
             locked_claim.status_history.append(
                     StatusHistory(status='revoked'))
+            if locked_claim.lock is not None:
+                session.delete(locked_claim.lock)
             session.commit()
-            # TODO delete lock
         else:
             session.rollback()
             raise ConflictException(claim_id=self.id,

@@ -54,9 +54,16 @@ class ClaimPatchSuccess(ClaimPatchBase):
                 {'status': 'active'})
         self.assertEqual('active', update_response.DATA['status'])
 
-# TODO
-#    def test_update_status_from_waiting_to_active_should_set_ttl(self):
-#        pass
+    def test_update_status_from_waiting_to_active_should_set_ttl(self):
+        second_post_response = self.post(URL, self.post_data)
+        self.patch(self.resource_url, {'status': 'released'})
+        update_response = self.patch(second_post_response.headers['Location'],
+                {'status': 'active'})
+        self.assertIsInstance(update_response.DATA['ttl'], float)
+        self.assertLessEqual(self.post_data['ttl']/2,
+                update_response.DATA['ttl'])
+        self.assertGreaterEqual(self.post_data['ttl'],
+                update_response.DATA['ttl'])
 
 # TODO
 #    def test_update_status_from_waiting_to_active_should_set_active_duration(self):

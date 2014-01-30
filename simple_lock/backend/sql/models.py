@@ -67,7 +67,7 @@ class Claim(Base):
         inspector = sqlalchemy.inspection.inspect(self)
         return inspector.session
 
-    def _promote_resource(self, session):
+    def promote_resource(self, session):
         try:
             claim = session.query(Claim
                     ).filter_by(resource=self.resource, status='waiting',
@@ -92,7 +92,7 @@ class Claim(Base):
 
     def activate(self):
         session = self.get_session()
-        owner = self._promote_resource(session)
+        owner = self.promote_resource(session)
 
         if owner is not None:
             if owner.id == self.id:

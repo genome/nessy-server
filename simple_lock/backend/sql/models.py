@@ -114,9 +114,6 @@ class Claim(Base):
                 message='Found no eligible claims for activating resource:  %s'
                 % self.resource)
 
-    def expire(self):
-        pass
-
     def release(self):
         session = self.get_session()
 

@@ -40,6 +40,9 @@ def get_claim_update_data():
     if data['status'] is not None:
         if data['status'] not in ['active', 'released', 'revoked']:
             errors['status'] = 'Invalid value for status'
+        if data['ttl'] is not None:
+            errors['extra-parameters'] = 'Only one parameter may be updated per request'
+
     if data['ttl'] is not None and data['ttl'] < 0:
         errors['ttl'] = 'Positive ttl required (in seconds)'
 

@@ -27,7 +27,8 @@ class Claim(Base):
     id = Column(Integer, primary_key=True)
     resource = Column(Text, index=True, nullable=False)
     initial_ttl = Column(Interval, index=True, nullable=False)
-    status = Column(Enum(*_VALID_STATUSES, name='foo'), index=True, nullable=False)
+    status = Column(Enum(*_VALID_STATUSES, name='foo'), index=True,
+            nullable=False)
 
     created = Column(DateTime(timezone=True), index=True, default=func.now(),
             nullable=False)
@@ -67,7 +68,26 @@ class Claim(Base):
         inspector = sqlalchemy.inspection.inspect(self)
         return inspector.session
 
+    def update_ttl(self, new_ttl):
+        session = self.get_session()
+        self._expire_owning_claim(session)
+
+        count = session.query(Lock).filter_by(claim_id=self.id).update({
+            'expiration_time':
+                func.now() + datetime.timedelta(seconds=new_ttl)},
+            synchronize_session=False)
+
+        if count == 1:
+            session.commit()
+            return self
+
+        else:
+            session.rollback()
+            raise ConflictException(claim_id=self.id, status=self.status,
+                message='Failed to update ttl')
+
     def promote_resource(self, session):
+        self._expire_owning_claim(session)
         try:
             claim = session.query(Claim
                     ).filter_by(resource=self.resource, status='waiting',
@@ -89,6 +109,23 @@ class Claim(Base):
                 ).filter_by(resource=self.resource).first()
         if lock:
             return lock.claim
+
+    def _expire_owning_claim(self, session):
+        try:
+            lock = session.query(Lock
+                    ).filter_by(resource=self.resource
+                    ).filter(Lock.expiration_time < func.now()
+                    ).first()
+
+            if lock:
+                claim = lock.claim
+                claim.status = 'expired'
+                claim.status_history.append(StatusHistory(status='expired'))
+                session.delete(lock)
+                session.commit()
+
+        except sqlalchemy.exc.IntegrityError:
+            session.rollback()
 
     def activate(self):
         session = self.get_session()

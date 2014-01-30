@@ -59,6 +59,12 @@ class SqlActor(ActorBase):
         if claim is None:
             raise exceptions.ClaimNotFound(claim_id=claim_id)
 
+        if ttl is not None:
+            return claim.update_ttl(ttl)
+        elif status is not None:
+            return self._update_status(claim, status)
+
+    def _update_status(self, claim, status):
         if status == 'active':
             return claim.activate()
         elif status == 'released':

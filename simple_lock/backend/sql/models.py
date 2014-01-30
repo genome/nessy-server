@@ -67,28 +67,50 @@ class Claim(Base):
         inspector = sqlalchemy.inspection.inspect(self)
         return inspector.session
 
+    def _promote_resource(self, session):
+        try:
+            claim = session.query(Claim
+                    ).filter_by(resource=self.resource, status='waiting',
+                    ).order_by(Claim.created).first()
+            if claim is not None:
+                lock = Lock(claim=claim, resource=self.resource,
+                        expiration_time=claim.now + claim.initial_ttl)
+                claim.status = 'active'
+                claim.activated = claim.now
+                claim.status_history.append(
+                        StatusHistory(status='active'))
+                session.add(lock)
+                session.commit()
+
+        except sqlalchemy.exc.IntegrityError:
+            session.rollback()
+
+        lock = session.query(Lock
+                ).filter_by(resource=self.resource).first()
+        if lock:
+            return lock.claim
+
     def activate(self):
         session = self.get_session()
+        owner = self._promote_resource(session)
 
-        query = session.query(Claim
-                ).filter_by(id=self.id
-                ).with_for_update()
-        locked_claim = query.one()
+        if owner is not None:
+            if owner.id == self.id:
+                if owner.status == 'active':
+                    return owner
+                else:
+                    raise ConflictException(claim_id=owner.id,
+                            status=owner.status,
+                            message='Invalid status for activation:  %s'
+                            % owner.status)
+            else:
+                raise ConflictException(active_claim_id=owner.id,
+                        message='Resource is locked by another claim')
 
-        if locked_claim.status == 'active':
-            session.rollback()
-        elif locked_claim.status == 'waiting':
-            locked_claim.status = 'active'
-            locked_claim.status_history.append(
-                    StatusHistory(status='active'))
-            session.commit()
         else:
-            session.rollback()
-            raise ConflictException(claim_id=self.id,
-                    status=locked_claim.status,
-                    message='Invalid status for activation')
-
-        return locked_claim
+            raise ConflictException(
+                message='Found no eligible claims for activating resource:  %s'
+                % self.resource)
 
     def expire(self):
         pass
@@ -105,8 +127,8 @@ class Claim(Base):
             locked_claim.status = 'released'
             locked_claim.status_history.append(
                     StatusHistory(status='released'))
+            session.delete(locked_claim.lock)
             session.commit()
-            # TODO add lock
         else:
             session.rollback()
             raise ConflictException(claim_id=self.id,
@@ -127,8 +149,9 @@ class Claim(Base):
             locked_claim.status = 'revoked'
             locked_claim.status_history.append(
                     StatusHistory(status='revoked'))
+            if locked_claim.status == 'active':
+                session.delete(locked_claim.lock)
             session.commit()
-            # TODO delete lock
         else:
             session.rollback()
             raise ConflictException(claim_id=self.id,

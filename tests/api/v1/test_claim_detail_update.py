@@ -156,6 +156,12 @@ class ClaimUpdateErrorMixin(ClaimUpdateMixinBase):
 #    def test_updating_ttl_when_status_not_active_should_return_409(self):
 #        pass
 
+    def test_updating_status_to_active_with_contention_should_return_409(self):
+        second_post_response = self.post(URL, self.post_data)
+        response = self.update(second_post_response.headers['Location'],
+                {'status': 'active'})
+        self.assertEqual(409, response.status_code)
+
 
 
 class ClaimDetailPatchMixin(object):

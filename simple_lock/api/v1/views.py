@@ -58,6 +58,3 @@ class ClaimView(Resource):
             return e.as_dict, 404
         except exceptions.ConflictException as e:
             return e.as_dict, 409
-
-    def put(self, id):
-        return self.patch(id)

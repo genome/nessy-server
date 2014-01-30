@@ -117,22 +117,15 @@ class Claim(Base):
     def release(self):
         session = self.get_session()
 
-        if self.lock is None:
-            raise ConflictException(status=self.status,
-                    message='Cannot release inactive claim')
+        count = session.query(Lock).filter_by(claim_id=self.id).delete()
+        if count != 1:
+            raise ConflictException(claim_id=self.id, status=self.status,
+                    message='Failed to remove lock.')
 
-        try:
-            session.delete(self.lock)
-            self.status = 'released'
-            self.status_history.append(StatusHistory(status='released'))
-            session.commit()
+        self.status = 'released'
+        self.status_history.append(StatusHistory(status='released'))
 
-        except sqlalchemy.exc.IntegrityError:
-            # This code is currently not test covered, but it seems necessary.
-            session.rollback()
-            raise ConflictException(claim_id=self.id,
-                    status=self.status,
-                    message='Failed to release claim')
+        session.commit()
 
         return self
 

@@ -24,10 +24,7 @@ def get_claim_post_data():
     elif data['ttl'] < 0:
         errors['ttl'] = 'Positive ttl required (in seconds)'
 
-    try:
-        data['user_data'] = simplejson.dumps(data['user_data'])
-    except TypeError, ValueError:
-        errors['user_data'] = 'Failed to serialize user_data'
+    data['user_data'] = simplejson.dumps(data['user_data'])
 
     return data, errors
 

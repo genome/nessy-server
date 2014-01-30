@@ -152,7 +152,9 @@ class Claim(Base):
             raise ConflictException(claim_id=self.id, status=self.status,
                     message='Failed to remove lock.')
 
-        self.status = 'released'
+        session.query(Claim).filter_by(id=self.id).update(
+                {'status': 'released', 'deactivated': func.now()},
+                synchronize_session=False)
         self.status_history.append(StatusHistory(status='released'))
 
         session.commit()

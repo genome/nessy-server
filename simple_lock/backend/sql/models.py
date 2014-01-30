@@ -96,14 +96,7 @@ class Claim(Base):
 
         if owner is not None:
             if owner.id == self.id:
-                if owner.status == 'active':
-                    return owner
-
-                else:
-                    raise ConflictException(claim_id=owner.id,
-                            status=owner.status,
-                            message='Invalid status for activation:  %s'
-                            % owner.status)
+                return owner
 
             else:
                 raise ConflictException(active_claim_id=owner.id,

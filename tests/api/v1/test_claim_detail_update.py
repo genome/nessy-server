@@ -118,9 +118,9 @@ class ClaimPatchError(ClaimPatchBase):
                  {'status': 'active'})
         self.assertEqual(404, invalid_response.status_code)
 
-# TODO
-#    def test_updating_claim_with_negative_ttl_should_return_409(self):
-#        pass
+    def test_updating_claim_with_negative_ttl_should_return_400(self):
+        invalid_response = self.patch(self.resource_url, {'ttl': -7})
+        self.assertEqual(400, invalid_response.status_code)
 
 # TODO
 #    def test_updating_expired_claim_should_return_409(self):

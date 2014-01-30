@@ -170,7 +170,9 @@ class Claim(Base):
         locked_claim = query.one()
 
         if locked_claim.status in ['active', 'waiting']:
-            locked_claim.status = 'revoked'
+            session.query(Claim).filter_by(id=self.id).update(
+                    {'status': 'revoked', 'deactivated': func.now()},
+                    synchronize_session=False)
             locked_claim.status_history.append(
                     StatusHistory(status='revoked'))
             if locked_claim.lock is not None:

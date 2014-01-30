@@ -63,9 +63,12 @@ class Claim(Base):
         else:
             return self.now - self.created
 
-    def activate(self):
+    def get_session(self):
         inspector = sqlalchemy.inspection.inspect(self)
-        session = inspector.session
+        return inspector.session
+
+    def activate(self):
+        session = self.get_session()
 
         query = session.query(Claim
                 ).filter_by(id=self.id
@@ -91,8 +94,7 @@ class Claim(Base):
         pass
 
     def release(self):
-        inspector = sqlalchemy.inspection.inspect(self)
-        session = inspector.session
+        session = self.get_session()
 
         query = session.query(Claim
                 ).filter_by(id=self.id
@@ -114,8 +116,7 @@ class Claim(Base):
         return locked_claim
 
     def revoke(self):
-        inspector = sqlalchemy.inspection.inspect(self)
-        session = inspector.session
+        session = self.get_session()
 
         query = session.query(Claim
                 ).filter_by(id=self.id

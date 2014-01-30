@@ -68,6 +68,7 @@ class Claim(Base):
         return inspector.session
 
     def promote_resource(self, session):
+        self._expire_owning_claim(session)
         try:
             claim = session.query(Claim
                     ).filter_by(resource=self.resource, status='waiting',
@@ -89,6 +90,23 @@ class Claim(Base):
                 ).filter_by(resource=self.resource).first()
         if lock:
             return lock.claim
+
+    def _expire_owning_claim(self, session):
+        try:
+            lock = session.query(Lock
+                    ).filter_by(resource=self.resource
+                    ).filter(Lock.expiration_time < func.now()
+                    ).first()
+
+            if lock:
+                claim = lock.claim
+                claim.status = 'expired'
+                claim.status_history.append(StatusHistory(status='expired'))
+                session.delete(lock)
+                session.commit()
+
+        except sqlalchemy.exc.IntegrityError:
+            session.rollback()
 
     def activate(self):
         session = self.get_session()

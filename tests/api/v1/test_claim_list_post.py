@@ -57,7 +57,7 @@ class ClaimListPostSuccessWithContentionTest(APITest):
         super(ClaimListPostSuccessWithContentionTest, self).setUp()
         self.post_data = {
             'resource': 'post-resource',
-            'ttl': 0.010,
+            'ttl': 600,
         }
         self.first_response = self.post(URL, self.post_data)
         self.second_response = self.post(URL, self.post_data)

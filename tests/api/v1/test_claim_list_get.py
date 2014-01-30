@@ -119,7 +119,7 @@ class ClaimListGetPaginationTest(APITest):
         super(ClaimListGetPaginationTest, self).setUp()
         self.post_data = {
             'resource': 'post-resource',
-            'ttl': 0.010,
+            'ttl': 600,
         }
 
     def _post_claims(self, number):

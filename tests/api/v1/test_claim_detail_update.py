@@ -162,6 +162,12 @@ class ClaimUpdateErrorMixin(ClaimUpdateMixinBase):
                 {'status': 'active'})
         self.assertEqual(409, response.status_code)
 
+    def test_release_inactive_lock_should_return_409(self):
+        second_post_response = self.post(URL, self.post_data)
+        response = self.update(second_post_response.headers['Location'],
+                {'status': 'released'})
+        self.assertEqual(409, response.status_code)
+
 
 
 class ClaimDetailPatchMixin(object):

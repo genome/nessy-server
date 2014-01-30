@@ -98,11 +98,13 @@ class Claim(Base):
             if owner.id == self.id:
                 if owner.status == 'active':
                     return owner
+
                 else:
                     raise ConflictException(claim_id=owner.id,
                             status=owner.status,
                             message='Invalid status for activation:  %s'
                             % owner.status)
+
             else:
                 raise ConflictException(active_claim_id=owner.id,
                         message='Resource is locked by another claim')
@@ -118,24 +120,24 @@ class Claim(Base):
     def release(self):
         session = self.get_session()
 
-        query = session.query(Claim
-                ).filter_by(id=self.id
-                ).with_for_update()
-        locked_claim = query.one()
+        if self.lock is None:
+            raise ConflictException(status=self.status,
+                    message='Cannot release inactive claim')
 
-        if locked_claim.status == 'active':
-            locked_claim.status = 'released'
-            locked_claim.status_history.append(
-                    StatusHistory(status='released'))
-            session.delete(locked_claim.lock)
+        try:
+            session.delete(self.lock)
+            self.status = 'released'
+            self.status_history.append(StatusHistory(status='released'))
             session.commit()
-        else:
+
+        except sqlalchemy.exc.IntegrityError:
+            # This code is currently not test covered, but it seems necessary.
             session.rollback()
             raise ConflictException(claim_id=self.id,
-                    status=locked_claim.status,
-                    message='Invalid status for release')
+                    status=self.status,
+                    message='Failed to release claim')
 
-        return locked_claim
+        return self
 
     def revoke(self):
         session = self.get_session()
@@ -149,7 +151,7 @@ class Claim(Base):
             locked_claim.status = 'revoked'
             locked_claim.status_history.append(
                     StatusHistory(status='revoked'))
-            if locked_claim.status == 'active':
+            if locked_claim.lock is not None:
                 session.delete(locked_claim.lock)
             session.commit()
         else:

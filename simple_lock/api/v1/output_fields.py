@@ -10,8 +10,7 @@ __all__ = [
 
 class MaybeTimedelta(fields.Raw):
     def format(self, value):
-        if value is not None:
-            return value.total_seconds()
+        return value.total_seconds()
 
 
 class JSONEncoded(fields.Raw):

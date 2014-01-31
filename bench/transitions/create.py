@@ -2,14 +2,13 @@ from .base import TransitionBase
 
 
 class Create(TransitionBase):
+    STATES = ['released', 'expired', 'revoked']
+
     def __init__(self, url, base_rate, ttl, **kwargs):
         super(Create, self).__init__(**kwargs)
         self.url = url
         self.base_rate = base_rate
         self.ttl = ttl
-
-    def targets(self, state):
-        return state.resources_in_states('released', 'expired', 'revoked')
 
     def modify_resource(self, resource, state):
         response = self.post(self.url, {'resource': resource, 'ttl': self.ttl})

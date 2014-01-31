@@ -2,13 +2,12 @@ from .base import TransitionBase
 
 
 class Heartbeat(TransitionBase):
+    STATES = ['active']
+
     def __init__(self, base_rate, ttl, **kwargs):
         super(Heartbeat, self).__init__(**kwargs)
         self.base_rate = base_rate
         self.ttl = ttl
-
-    def targets(self, state):
-        return state.resources_in_states('active')
 
     def modify_resource(self, resource, state):
         claim_url = state.get_claim_url(resource)

@@ -2,12 +2,11 @@ from .base import TransitionBase
 
 
 class Revoke(TransitionBase):
+    STATES = ['active', 'waiting']
+
     def __init__(self, base_rate, **kwargs):
         super(Revoke, self).__init__(**kwargs)
         self.base_rate = base_rate
-
-    def targets(self, state):
-        return state.resources_in_states('active', 'waiting')
 
     def modify_resource(self, resource, state):
         claim_url = state.get_claim_url(resource)

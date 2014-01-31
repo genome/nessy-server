@@ -19,9 +19,8 @@ class TransitionBase(object):
         return requests.patch(url, data=simplejson.dumps(data),
                 headers=self._headers)
 
-    @abc.abstractmethod
     def targets(self, state):
-        pass
+        return state.resources_in_states(*self.STATES)
 
     def rate(self, state):
         return self.base_rate * len(self.targets(state))
@@ -33,6 +32,10 @@ class TransitionBase(object):
         target_resource = targets[i]
 
         self.modify_resource(target_resource, state)
+
+    @abc.abstractproperty
+    def STATES(self):
+        pass
 
     @abc.abstractmethod
     def modify_resource(self, resource, state):

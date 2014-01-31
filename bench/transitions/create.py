@@ -4,10 +4,9 @@ from .base import TransitionBase
 class Create(TransitionBase):
     STATES = ['released', 'expired', 'revoked']
 
-    def __init__(self, url, base_rate, ttl, **kwargs):
+    def __init__(self, url, ttl, **kwargs):
         super(Create, self).__init__(**kwargs)
         self.url = url
-        self.base_rate = base_rate
         self.ttl = ttl
 
     def modify_resource(self, resource, state):

@@ -4,9 +4,8 @@ from .base import TransitionBase
 class Heartbeat(TransitionBase):
     STATES = ['active']
 
-    def __init__(self, base_rate, ttl, **kwargs):
+    def __init__(self, ttl, **kwargs):
         super(Heartbeat, self).__init__(**kwargs)
-        self.base_rate = base_rate
         self.ttl = ttl
 
     def modify_resource(self, resource, state):

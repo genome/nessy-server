@@ -4,10 +4,6 @@ from .base import TransitionBase
 class Activate(TransitionBase):
     STATES = ['waiting']
 
-    def __init__(self, base_rate, **kwargs):
-        super(Activate, self).__init__(**kwargs)
-        self.base_rate = base_rate
-
     def modify_resource(self, resource, state):
         claim_url = state.get_claim_url(resource)
         response = self.patch(claim_url, {'status': 'active'})

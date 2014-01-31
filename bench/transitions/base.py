@@ -11,6 +11,9 @@ class TransitionBase(object):
         'Content-Type': 'application/json',
     }
 
+    def __init__(self, base_rate):
+        self.base_rate = base_rate
+
     def post(self, url, data):
         return requests.post(url, data=simplejson.dumps(data),
                 headers=self._headers)

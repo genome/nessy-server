@@ -6,12 +6,13 @@ from state import State
 
 import argparse
 import datetime
+import pprint
 
 
 def main():
     args = parse_args()
 
-    state = State(resource_names=_resource_names(args.resources))
+    initial_state = State(resource_names=_resource_names(args.resources))
 
     transitions = [
         Activate(base_rate=args.activate_rate),
@@ -22,11 +23,11 @@ def main():
     ]
 
     begin = datetime.datetime.now()
-    loop(state, transitions, args.iterations)
+    final_state = loop(initial_state, transitions, args.iterations)
     end = datetime.datetime.now()
 
-    print 'iterations seconds'
-    print args.iterations, (end - begin).total_seconds()
+    results = final_state.report()
+    pprint.pprint(results)
 
 
 def parse_args():

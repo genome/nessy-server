@@ -1,4 +1,5 @@
 import collections
+import datetime
 
 
 
@@ -34,3 +35,20 @@ class State(object):
 
     def noop(self):
         self.transition_count += 1
+
+    def start_timer(self):
+        self._begin_time = datetime.datetime.now()
+
+    def stop_timer(self):
+        self._end_time = datetime.datetime.now()
+
+    @property
+    def _total_runtime(self):
+        return (self._end_time - self._begin_time).total_seconds()
+
+    def report(self):
+        return {
+            'total_requests': self.transition_count,
+            'total_runtime': self._total_runtime,
+            'rps': self.transition_count / self._total_runtime,
+        }

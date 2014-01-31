@@ -2,7 +2,9 @@ import bisect
 import random
 
 
-def loop(state, transitions, iterations):
+def loop(args):
+    state, transitions, iterations = args
+
     accumulated_rs = _accum([t.rate(state) for t in transitions])
     R = accumulated_rs[-1]
 

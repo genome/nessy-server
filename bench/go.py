@@ -2,10 +2,12 @@
 
 from transitions import *
 from loop import loop
+from multiprocessing import Pool
 from state import State
 
 import argparse
 import datetime
+import itertools
 import pprint
 
 
@@ -22,12 +24,17 @@ def main():
         Revoke(base_rate=args.revoke_rate),
     ]
 
+    pool = Pool(args.processes)
     begin = datetime.datetime.now()
-    final_state = loop(initial_state, transitions, args.iterations)
+    final_states = pool.map(loop, itertools.repeat(
+        (initial_state, transitions, args.iterations), args.processes))
     end = datetime.datetime.now()
 
-    results = final_state.report()
-    pprint.pprint(results)
+    for fs in final_states:
+        results = fs.report()
+        pprint.pprint(results)
+
+    print 'total time', (end - begin).total_seconds()
 
 
 def parse_args():

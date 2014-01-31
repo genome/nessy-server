@@ -28,10 +28,11 @@ class State(object):
         self._state_index[old_state].remove(resource)
         self._state_index[state].add(resource)
 
-        if claim_url is None and resource in self._claim_urls:
-            self._claim_urls.pop(resource)
-        else:
-            self._claim_urls[resource] = claim_url
+        if claim_url is not self.UNSET:
+            if claim_url is None and resource in self._claim_urls:
+                self._claim_urls.pop(resource)
+            else:
+                self._claim_urls[resource] = claim_url
 
     def noop(self):
         self.transition_count += 1

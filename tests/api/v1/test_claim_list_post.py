@@ -68,6 +68,9 @@ class ClaimListPostSuccessWithContentionTest(APITest):
     def test_should_set_status_to_waiting(self):
         self.assertEqual('waiting', self.second_response.DATA['status'])
 
+    def test_waiting_claim_should_have_no_active_duration(self):
+        self.assertIsNone(self.second_response.DATA['active_duration'])
+
 
 class ClaimListPostErrorTest(APITest):
     def test_missing_mandatory_parameters_should_return_400(self):

@@ -1,4 +1,5 @@
 import abc
+import datetime
 import simplejson
 import requests
 
@@ -14,13 +15,27 @@ class TransitionBase(object):
     def __init__(self, base_rate):
         self.base_rate = base_rate
 
-    def post(self, url, data):
-        return requests.post(url, data=simplejson.dumps(data),
+    def post(self, url, data, state):
+        begin = datetime.datetime.now()
+        response = requests.post(url, data=simplejson.dumps(data),
                 headers=self._headers)
+        end = datetime.datetime.now()
 
-    def patch(self, url, data):
-        return requests.patch(url, data=simplejson.dumps(data),
+        state.register_request(self.__class__.__name__,
+                (end - begin).total_seconds())
+
+        return response
+
+    def patch(self, url, data, state):
+        begin = datetime.datetime.now()
+        response = requests.patch(url, data=simplejson.dumps(data),
                 headers=self._headers)
+        end = datetime.datetime.now()
+
+        state.register_request(self.__class__.__name__,
+                (end - begin).total_seconds())
+
+        return response
 
     def targets(self, state):
         return state.resources_in_states(*self.STATES)

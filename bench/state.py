@@ -14,6 +14,8 @@ class State(object):
         self._claim_urls = {}
         self.transition_count = 0
 
+        self._request_times = collections.defaultdict(list)
+
     def get_claim_url(self, resource):
         return self._claim_urls[resource]
 
@@ -48,8 +50,21 @@ class State(object):
         return (self._end_time - self._begin_time).total_seconds()
 
     def report(self):
+        tag_times = {
+            tag: {
+                'mean': sum(times) / len(times),
+                'number': len(times),
+                'rps': len(times) / sum(times),
+            }
+            for tag, times in self._request_times.iteritems()
+        }
+
         return {
             'total_requests': self.transition_count,
             'total_runtime': self._total_runtime,
             'rps': self.transition_count / self._total_runtime,
+            'times': tag_times,
         }
+
+    def register_request(self, tag, seconds):
+        self._request_times[tag].append(seconds)

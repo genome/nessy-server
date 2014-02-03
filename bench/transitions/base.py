@@ -1,4 +1,5 @@
 import abc
+import collections
 import datetime
 import simplejson
 import requests
@@ -15,13 +16,29 @@ class TransitionBase(object):
     def __init__(self, base_rate, stats=None):
         self.base_rate = base_rate
         self.stats = stats
+        self._sessions = None
+
+    @property
+    def sessions(self):
+        if self._sessions is None:
+            self._sessions = collections.defaultdict(self._new_session)
+        return self._sessions
+
+
+    def _new_session(self):
+        s = requests.Session()
+
+        s.headers.update(self._headers)
+
+        return s
 
     def attach_stats_monitor(self, stats):
         self.stats = stats
 
 
-    def _http_execute(self, method_name, url, data):
-        method = getattr(requests, method_name)
+    def _http_execute(self, method_name, url, data, session_id):
+        session =  self.sessions[session_id]
+        method = getattr(session, method_name)
         begin = datetime.datetime.now()
         response = method(url, data=simplejson.dumps(data),
                 headers=self._headers)
@@ -33,11 +50,11 @@ class TransitionBase(object):
         return response
 
 
-    def post(self, url, data):
-        return self._http_execute('post', url, data)
+    def post(self, url, data, session_id):
+        return self._http_execute('post', url, data, session_id)
 
-    def patch(self, url, data):
-        return self._http_execute('patch', url, data)
+    def patch(self, url, data, session_id):
+        return self._http_execute('patch', url, data, session_id)
 
     def targets(self, state):
         return state.resources_in_states(*self.STATES)

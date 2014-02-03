@@ -10,7 +10,7 @@ class Heartbeat(TransitionBase):
 
     def modify_resource(self, resource, state):
         claim_url = state.get_claim_url(resource)
-        response = self.patch(claim_url, {'ttl': self.ttl})
+        response = self.patch(claim_url, {'ttl': self.ttl}, session_id=resource)
 
         if response.status_code == 200:
             state.noop()

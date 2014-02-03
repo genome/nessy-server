@@ -110,7 +110,7 @@ def _compute_total_summary(total_data):
     result['count'] = count
     result['min'] = min(total_data['min'])
     result['max'] = max(total_data['max'])
-    result['mean'] = _mean(total_data['mean'])
+    result['mean'] = _weighted_mean(total_data['mean'], total_data['count'])
     result['rps'] = _weighted_mean(total_data['rps'], total_data['count'])
     return result
 

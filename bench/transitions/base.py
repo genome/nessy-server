@@ -36,12 +36,12 @@ class TransitionBase(object):
         self.stats = stats
 
 
-    def _http_execute(self, method_name, url, data, session_id):
+    def _http_execute(self, method_name, url, data, params, session_id):
         session =  self.sessions[session_id]
         method = getattr(session, method_name)
         begin = datetime.datetime.now()
         response = method(url, data=simplejson.dumps(data),
-                headers=self._headers)
+                params=params, headers=self._headers)
         end = datetime.datetime.now()
         self.stats.add_request(self.__class__.__name__, method_name,
                 response.status_code,
@@ -49,12 +49,14 @@ class TransitionBase(object):
 
         return response
 
+    def get(self, url, params, session_id):
+        return self._http_execute('get', url, None, params, session_id)
 
     def post(self, url, data, session_id):
-        return self._http_execute('post', url, data, session_id)
+        return self._http_execute('post', url, data, None, session_id)
 
     def patch(self, url, data, session_id):
-        return self._http_execute('patch', url, data, session_id)
+        return self._http_execute('patch', url, data, None, session_id)
 
     def targets(self, state):
         return state.resources_in_states(*self.STATES)

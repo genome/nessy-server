@@ -18,7 +18,7 @@ def main():
     initial_state = State(resource_names=_resource_names(args.resources))
 
     transitions = [
-        Activate(base_rate=args.activate_rate),
+        Activate(base_rate=args.activate_rate, get_url=args.url),
         Create(url=args.url, base_rate=args.create_rate, ttl=args.create_ttl),
         Heartbeat(base_rate=args.heartbeat_rate, ttl=args.heartbeat_ttl),
         Release(base_rate=args.release_rate),

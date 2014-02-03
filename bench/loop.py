@@ -1,14 +1,18 @@
+from stats import Stats
 import bisect
 import random
 
 
 def loop(args):
     state, transitions, iterations = args
+    stats = Stats()
+
+    for t in transitions:
+        t.attach_stats_monitor(stats)
 
     accumulated_rs = _accum([t.rate(state) for t in transitions])
     R = accumulated_rs[-1]
 
-    state.start_timer()
     while not end_conditions_met(state, R, iterations):
         r = random.random() * R
         i = bisect.bisect_left(accumulated_rs, r)
@@ -16,9 +20,8 @@ def loop(args):
         transitions[i].execute(state, accumulated_rs[i] - r)
         accumulated_rs = _accum([t.rate(state) for t in transitions])
         R = accumulated_rs[-1]
-    state.stop_timer()
 
-    return state
+    return stats
 
 
 def end_conditions_met(state, R, iterations):

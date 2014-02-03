@@ -26,11 +26,11 @@ def main():
 
     pool = Pool(args.processes)
     begin = datetime.datetime.now()
-    final_states = pool.map(loop, itertools.repeat(
+    stats = pool.map(loop, itertools.repeat(
         (initial_state, transitions, args.iterations), args.processes))
     end = datetime.datetime.now()
 
-    for fs in final_states:
+    for fs in stats:
         results = fs.report()
         pprint.pprint(results)
 

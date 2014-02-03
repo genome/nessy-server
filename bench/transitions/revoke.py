@@ -6,7 +6,7 @@ class Revoke(TransitionBase):
 
     def modify_resource(self, resource, state):
         claim_url = state.get_claim_url(resource)
-        response = self.patch(claim_url, {'status': 'revoked'}, state=state)
+        response = self.patch(claim_url, {'status': 'revoked'})
 
         if response.status_code == 204:
             state.set_resource_state(resource, 'revoked', claim_url=None)

@@ -10,8 +10,7 @@ class Create(TransitionBase):
         self.ttl = ttl
 
     def modify_resource(self, resource, state):
-        response = self.post(self.url, {'resource': resource, 'ttl': self.ttl},
-                state=state)
+        response = self.post(self.url, {'resource': resource, 'ttl': self.ttl})
         if response.status_code == 201:
             claim_url = response.headers['Location']
             state.set_resource_state(resource, 'active', claim_url=claim_url)

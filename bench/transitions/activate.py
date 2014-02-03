@@ -6,7 +6,7 @@ class Activate(TransitionBase):
 
     def modify_resource(self, resource, state):
         claim_url = state.get_claim_url(resource)
-        response = self.patch(claim_url, {'status': 'active'}, state=state)
+        response = self.patch(claim_url, {'status': 'active'})
 
         if response.status_code == 200:
             state.set_resource_state(resource, 'active', claim_url=claim_url)

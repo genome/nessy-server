@@ -12,30 +12,32 @@ class TransitionBase(object):
         'Content-Type': 'application/json',
     }
 
-    def __init__(self, base_rate):
+    def __init__(self, base_rate, stats=None):
         self.base_rate = base_rate
+        self.stats = stats
 
-    def post(self, url, data, state):
+    def attach_stats_monitor(self, stats):
+        self.stats = stats
+
+
+    def _http_execute(self, method_name, url, data):
+        method = getattr(requests, method_name)
         begin = datetime.datetime.now()
-        response = requests.post(url, data=simplejson.dumps(data),
+        response = method(url, data=simplejson.dumps(data),
                 headers=self._headers)
         end = datetime.datetime.now()
-
-        state.register_request(self.__class__.__name__,
+        self.stats.add_request(self.__class__.__name__, method_name,
+                response.status_code,
                 (end - begin).total_seconds())
 
         return response
 
-    def patch(self, url, data, state):
-        begin = datetime.datetime.now()
-        response = requests.patch(url, data=simplejson.dumps(data),
-                headers=self._headers)
-        end = datetime.datetime.now()
 
-        state.register_request(self.__class__.__name__,
-                (end - begin).total_seconds())
+    def post(self, url, data):
+        return self._http_execute('post', url, data)
 
-        return response
+    def patch(self, url, data):
+        return self._http_execute('patch', url, data)
 
     def targets(self, state):
         return state.resources_in_states(*self.STATES)

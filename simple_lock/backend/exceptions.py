@@ -9,3 +9,6 @@ class ClaimNotFound(BackendException):
 
 class ConflictException(BackendException):
     pass
+
+class InvalidRequest(BackendException):
+    pass

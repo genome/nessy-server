@@ -54,6 +54,8 @@ class ClaimView(Resource):
             else:
                 return marshal(content, claim_fields), 200
 
+        except exceptions.InvalidRequest as e:
+            return e.as_dict, 400
         except exceptions.ClaimNotFound as e:
             return e.as_dict, 404
         except exceptions.ConflictException as e:

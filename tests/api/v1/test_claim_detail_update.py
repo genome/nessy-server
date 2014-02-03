@@ -148,38 +148,37 @@ class ClaimPatchError(ClaimPatchBase):
         invalid_response = self.patch(self.resource_url, {'ttl': -7})
         self.assertEqual(400, invalid_response.status_code)
 
-    def test_updating_expired_claim_should_return_409(self):
+    def test_updating_expired_claim_should_return_400(self):
         self.patch(self.resource_url, {'ttl': 0.005})
         time.sleep(0.005)
         expired_response = self.patch(self.resource_url, {'ttl': 600})
-        self.assertEqual(409, expired_response.status_code)
+        self.assertEqual(400, expired_response.status_code)
 
-    def test_updating_released_claim_should_return_409(self):
+    def test_updating_released_claim_should_return_400(self):
         self.patch(self.resource_url, {'status': 'released'})
         statuses = ['active', 'released', 'revoked']
         for status in statuses:
             response = self.patch(self.resource_url, {'status': status})
-            self.assertEqual(409, response.status_code)
+            self.assertEqual(400, response.status_code)
 
-    def test_updating_revoked_claim_should_return_409(self):
+    def test_updating_revoked_claim_should_return_400(self):
         self.patch(self.resource_url, {'status': 'revoked'})
         statuses = ['active', 'released', 'revoked']
         for status in statuses:
             response = self.patch(self.resource_url, {'status': status})
-            self.assertEqual(409, response.status_code)
+            self.assertEqual(400, response.status_code)
 
-    def test_updating_status_from_waiting_to_released_should_return_409(self):
+    def test_updating_status_from_waiting_to_released_should_return_400(self):
         second_post_response = self.post(URL, self.post_data)
         response = self.patch(second_post_response.headers['Location'],
                 {'status': 'released'})
-        self.assertEqual(409, response.status_code)
+        self.assertEqual(400, response.status_code)
 
-    def test_updating_ttl_when_status_not_active_should_return_409(self):
+    def test_updating_ttl_when_status_not_active_should_return_400(self):
         second_post_response = self.post(URL, self.post_data)
         response = self.patch(second_post_response.headers['Location'],
                 {'ttl': 600})
-        self.assertEqual(409, response.status_code)
-
+        self.assertEqual(400, response.status_code)
 
     def test_updating_status_to_active_with_contention_should_return_409(self):
         second_post_response = self.post(URL, self.post_data)
@@ -187,11 +186,16 @@ class ClaimPatchError(ClaimPatchBase):
                 {'status': 'active'})
         self.assertEqual(409, response.status_code)
 
-    def test_release_inactive_lock_should_return_409(self):
+    def test_updating_released_to_active_while_empty_should_return_400(self):
+        self.patch(self.resource_url, {'status': 'released'})
+        response = self.patch(self.resource_url, {'status': 'active'})
+        self.assertEqual(400, response.status_code)
+
+    def test_updating_released_to_active_while_full_should_return_400(self):
         second_post_response = self.post(URL, self.post_data)
-        response = self.patch(second_post_response.headers['Location'],
-                {'status': 'released'})
-        self.assertEqual(409, response.status_code)
+        self.patch(self.resource_url, {'status': 'released'})
+        response = self.patch(self.resource_url, {'status': 'active'})
+        self.assertEqual(400, response.status_code)
 
     def test_updating_multiple_fields_should_return_400(self):
         response = self.patch(self.resource_url,

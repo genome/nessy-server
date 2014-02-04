@@ -21,5 +21,6 @@ class Create(TransitionBase):
             state.set_resource_state(resource, 'waiting', claim_url=claim_url)
 
         else:
-            raise RuntimeError('Unexpected code (%d) from post: %s'
-                    % (response.status_code, response.text))
+            raise RuntimeError('Unexpected code from post (%s): %d.  %s'
+                    % (self.__class__.__name__, response.status_code,
+                        response.text))

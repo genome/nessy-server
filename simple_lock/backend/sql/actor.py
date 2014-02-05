@@ -44,9 +44,11 @@ class SqlActor(ActorBase):
         self.session.add(claim)
         self.session.commit()
 
-        owning_claim = claim.promote_resource(self.session)
-        if owning_claim is not None and claim.id == owning_claim.id:
-            return owning_claim, True
+        res = models.Resource(resource, session=self.session)
+        res.promote()
+        owner_id = res.owner_id
+        if owner_id is not None and claim.id == owner_id:
+            return claim, True
         else:
             return claim, False
 

@@ -7,10 +7,60 @@ import datetime
 import sqlalchemy.ext.declarative
 
 
-__all__ = ['Base', 'Claim', 'StatusHistory', 'Lock']
+__all__ = ['Base', 'Claim', 'Resource', 'StatusHistory', 'Lock']
 
 
 Base = sqlalchemy.ext.declarative.declarative_base()
+
+
+class Resource(object):
+    def __init__(self, resource, session=None):
+        self.resource = resource
+        self.session = session
+
+    def promote(self):
+        self.expire_owning_claim()
+        try:
+            claim = self.session.query(Claim
+                    ).filter_by(resource=self.resource, status='waiting',
+                    ).order_by(Claim.created).first()
+            if claim is not None:
+                lock = Lock(claim=claim, resource=self.resource,
+                        expiration_time=claim.now + claim.initial_ttl)
+                claim.status = 'active'
+                claim.activated = claim.now
+                claim.status_history.append(
+                        StatusHistory(status='active'))
+                self.session.add(lock)
+                self.session.commit()
+
+        except sqlalchemy.exc.IntegrityError:
+            self.session.rollback()
+
+    def expire_owning_claim(self):
+        try:
+            lock = self.session.query(Lock
+                    ).filter_by(resource=self.resource
+                    ).filter(Lock.expiration_time < func.now()
+                    ).first()
+
+            if lock:
+                claim = lock.claim
+                claim.status = 'expired'
+                claim.status_history.append(StatusHistory(status='expired'))
+                self.session.delete(lock)
+                self.session.commit()
+
+        except sqlalchemy.exc.IntegrityError:
+            self.session.rollback()
+
+    @property
+    def owner_id(self):
+        lock = self.session.query(Lock
+                ).filter_by(resource=self.resource).first()
+        if lock:
+            return lock.claim_id
+
 
 
 _VALID_STATUSES = [
@@ -20,6 +70,7 @@ _VALID_STATUSES = [
     'revoked',
     'waiting',
 ]
+
 
 class Claim(Base):
     __tablename__ = 'claim'
@@ -70,7 +121,8 @@ class Claim(Base):
 
     def update_ttl(self, new_ttl):
         session = self.get_session()
-        self._expire_owning_claim(session)
+        resource = Resource(self.resource, session=session)
+        resource.expire_owning_claim()
 
         count = session.query(Lock).filter_by(claim_id=self.id).update({
             'expiration_time':
@@ -86,57 +138,18 @@ class Claim(Base):
             raise InvalidRequest(claim_id=self.id, status=self.status,
                 message='Failed to update ttl')
 
-    def promote_resource(self, session):
-        self._expire_owning_claim(session)
-        try:
-            claim = session.query(Claim
-                    ).filter_by(resource=self.resource, status='waiting',
-                    ).order_by(Claim.created).first()
-            if claim is not None:
-                lock = Lock(claim=claim, resource=self.resource,
-                        expiration_time=claim.now + claim.initial_ttl)
-                claim.status = 'active'
-                claim.activated = claim.now
-                claim.status_history.append(
-                        StatusHistory(status='active'))
-                session.add(lock)
-                session.commit()
-
-        except sqlalchemy.exc.IntegrityError:
-            session.rollback()
-
-        lock = session.query(Lock
-                ).filter_by(resource=self.resource).first()
-        if lock:
-            return lock.claim
-
-    def _expire_owning_claim(self, session):
-        try:
-            lock = session.query(Lock
-                    ).filter_by(resource=self.resource
-                    ).filter(Lock.expiration_time < func.now()
-                    ).first()
-
-            if lock:
-                claim = lock.claim
-                claim.status = 'expired'
-                claim.status_history.append(StatusHistory(status='expired'))
-                session.delete(lock)
-                session.commit()
-
-        except sqlalchemy.exc.IntegrityError:
-            session.rollback()
-
     def activate(self):
         session = self.get_session()
-        owner = self.promote_resource(session)
+        resource = Resource(self.resource, session=session)
+        resource.promote()
+        owner_id = resource.owner_id
 
-        if owner is not None:
-            if owner.id == self.id:
-                return owner
+        if owner_id is not None:
+            if owner_id == self.id:
+                return self
 
             elif self.status == 'waiting':
-                raise ConflictException(active_claim_id=owner.id,
+                raise ConflictException(active_claim_id=owner_id,
                         message='Resource is locked by another claim')
             else:
                 raise InvalidRequest(message='Claim has invalid status.',

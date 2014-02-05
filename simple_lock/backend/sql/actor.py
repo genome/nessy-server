@@ -2,6 +2,7 @@ from . import models
 from . import filters
 from .. import exceptions
 from ..base_actor import ActorBase
+from sqlalchemy import func
 import datetime
 import sqlalchemy.exc
 
@@ -62,10 +63,29 @@ class SqlActor(ActorBase):
             raise exceptions.ClaimNotFound(claim_id=claim_id)
 
         if ttl is not None:
-            return claim.update_ttl(ttl)
+            return self._update_ttl(claim, ttl)
         else:
             assert status is not None
             return self._update_status(claim, status)
+
+    def _update_ttl(self, claim, new_ttl):
+        resource = models.Resource(claim.resource, session=self.session)
+        resource.expire_owning_claim()
+
+        count = self.session.query(models.Lock
+                ).filter_by(claim_id=claim.id).update({
+                    'expiration_time':
+                        func.now() + datetime.timedelta(seconds=new_ttl)},
+                synchronize_session=False)
+
+        if count == 1:
+            self.session.commit()
+            return claim
+
+        else:
+            self.session.rollback()
+            raise exceptions.InvalidRequest(claim_id=claim.id,
+                    status=claim.status, message='Failed to update ttl')
 
     def _update_status(self, claim, status):
         if status == 'active':

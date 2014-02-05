@@ -123,25 +123,6 @@ class Claim(Base):
         inspector = sqlalchemy.inspection.inspect(self)
         return inspector.session
 
-    def update_ttl(self, new_ttl):
-        session = self.get_session()
-        resource = Resource(self.resource, session=session)
-        resource.expire_owning_claim()
-
-        count = session.query(Lock).filter_by(claim_id=self.id).update({
-            'expiration_time':
-                func.now() + datetime.timedelta(seconds=new_ttl)},
-            synchronize_session=False)
-
-        if count == 1:
-            session.commit()
-            return self
-
-        else:
-            session.rollback()
-            raise InvalidRequest(claim_id=self.id, status=self.status,
-                message='Failed to update ttl')
-
 
 class StatusHistory(Base):
     __tablename__ = 'status_history'

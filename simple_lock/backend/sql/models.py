@@ -27,10 +27,7 @@ class Resource(object):
             if claim is not None:
                 lock = Lock(claim=claim, resource=self.resource,
                         expiration_time=claim.now + claim.initial_ttl)
-                claim.status = 'active'
-                claim.activated = claim.now
-                claim.status_history.append(
-                        StatusHistory(status='active'))
+                claim.set_status('active')
                 self.session.add(lock)
                 self.session.commit()
 
@@ -46,8 +43,7 @@ class Resource(object):
 
             if lock:
                 claim = lock.claim
-                claim.status = 'expired'
-                claim.status_history.append(StatusHistory(status='expired'))
+                claim.set_status('expired')
                 self.session.delete(lock)
                 self.session.commit()
 
@@ -92,6 +88,14 @@ class Claim(Base):
     lock = relationship('Lock', uselist=False, backref='claim')
 
     now = column_property(select([func.now()]))
+
+    def set_status(self, new_status):
+        self.status = new_status
+        self.status_history.append(StatusHistory(status=new_status))
+        if new_status == 'active':
+            self.activated = self.now
+        elif new_status in ('released', 'revoked', 'expired'):
+            self.deactivated = self.now
 
     @property
     def ttl(self):
@@ -168,11 +172,7 @@ class Claim(Base):
             raise InvalidRequest(claim_id=self.id, status=self.status,
                     message='Failed to remove lock.')
 
-        session.query(Claim).filter_by(id=self.id).update(
-                {'status': 'released', 'deactivated': func.now()},
-                synchronize_session=False)
-        self.status_history.append(StatusHistory(status='released'))
-
+        self.set_status('released')
         session.commit()
 
         return self
@@ -186,11 +186,7 @@ class Claim(Base):
         locked_claim = query.one()
 
         if locked_claim.status in ['active', 'waiting']:
-            session.query(Claim).filter_by(id=self.id).update(
-                    {'status': 'revoked', 'deactivated': func.now()},
-                    synchronize_session=False)
-            locked_claim.status_history.append(
-                    StatusHistory(status='revoked'))
+            self.set_status('revoked')
             if locked_claim.lock is not None:
                 session.delete(locked_claim.lock)
             session.commit()

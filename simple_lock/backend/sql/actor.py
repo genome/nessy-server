@@ -135,7 +135,7 @@ class SqlActor(ActorBase):
         locked_claim = query.one()
 
         if locked_claim.status in ['active', 'waiting']:
-            claim.set_status('revoked')
+            locked_claim.set_status('revoked')
             if locked_claim.lock is not None:
                 self.session.delete(locked_claim.lock)
             self.session.commit()

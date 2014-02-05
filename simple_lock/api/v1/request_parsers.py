@@ -4,6 +4,7 @@ import simplejson
 
 __all__ = []
 
+
 def pass_through_type(value):
     return value
 
@@ -41,7 +42,8 @@ def get_claim_update_data():
         if data['status'] not in ['active', 'released', 'revoked']:
             errors['status'] = 'Invalid value for status'
         if data['ttl'] is not None:
-            errors['extra-parameters'] = 'Only one parameter may be updated per request'
+            errors['extra-parameters'] =\
+                    'Only one parameter may be updated per request'
 
     if data['ttl'] is not None and data['ttl'] < 0:
         errors['ttl'] = 'Positive ttl required (in seconds)'
@@ -59,8 +61,10 @@ _claim_list.add_argument('resource', type=str, location='args')
 _claim_list.add_argument('status', type=str, location='args')
 _claim_list.add_argument('minimum_active_duration', type=float, location='args')
 _claim_list.add_argument('maximum_active_duration', type=float, location='args')
-_claim_list.add_argument('minimum_waiting_duration', type=float, location='args')
-_claim_list.add_argument('maximum_waiting_duration', type=float, location='args')
+_claim_list.add_argument('minimum_waiting_duration', type=float,
+        location='args')
+_claim_list.add_argument('maximum_waiting_duration', type=float,
+        location='args')
 _claim_list.add_argument('minimum_ttl', type=float, location='args')
 _claim_list.add_argument('maximum_ttl', type=float, location='args')
 def get_claim_list_data():

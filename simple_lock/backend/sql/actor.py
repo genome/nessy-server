@@ -1,7 +1,8 @@
 from . import models
-from . import translations
+from . import filters
 from .. import exceptions
 from ..base_actor import ActorBase
+from sqlalchemy import func
 import datetime
 import sqlalchemy.exc
 
@@ -23,14 +24,14 @@ class SqlActor(ActorBase):
 
         query = self.session.query(models.Claim)
 
-        query = translations.resource_equal(query, resource)
-        query = translations.status_equal(query, status)
+        query = filters.resource_equal(query, resource)
+        query = filters.status_equal(query, status)
 
-        query = translations.ttl_range(query, minimum_ttl, maximum_ttl)
+        query = filters.ttl_range(query, minimum_ttl, maximum_ttl)
 
-        query = translations.active_duration_range(query,
+        query = filters.active_duration_range(query,
                 minimum_active_duration, maximum_active_duration)
-        query = translations.waiting_duration_range(query,
+        query = filters.waiting_duration_range(query,
                 minimum_waiting_duration, maximum_waiting_duration)
 
         query = query.limit(limit).offset(offset)
@@ -44,9 +45,11 @@ class SqlActor(ActorBase):
         self.session.add(claim)
         self.session.commit()
 
-        owning_claim = claim.promote_resource(self.session)
-        if owning_claim is not None and claim.id == owning_claim.id:
-            return owning_claim, True
+        res = models.Resource(resource, session=self.session)
+        res.promote()
+        owner_id = res.owner_id
+        if owner_id is not None and claim.id == owner_id:
+            return claim, True
         else:
             return claim, False
 
@@ -60,17 +63,84 @@ class SqlActor(ActorBase):
             raise exceptions.ClaimNotFound(claim_id=claim_id)
 
         if ttl is not None:
-            return claim.update_ttl(ttl)
-        elif status is not None:
+            return self._update_ttl(claim, ttl)
+        else:
+            assert status is not None
             return self._update_status(claim, status)
+
+    def _update_ttl(self, claim, new_ttl):
+        resource = models.Resource(claim.resource, session=self.session)
+        resource.expire_owning_claim()
+
+        count = self.session.query(models.Lock
+                ).filter_by(claim_id=claim.id).update({
+                    'expiration_time':
+                        func.now() + datetime.timedelta(seconds=new_ttl)},
+                synchronize_session=False)
+
+        if count == 1:
+            self.session.commit()
+            return claim
+
+        else:
+            self.session.rollback()
+            raise exceptions.InvalidRequest(claim_id=claim.id,
+                    status=claim.status, message='Failed to update ttl')
 
     def _update_status(self, claim, status):
         if status == 'active':
-            return claim.activate()
+            return self._activate(claim)
         elif status == 'released':
-            claim.release()
-            return
+            self._release(claim)
         else:
             assert status == 'revoked'
-            claim.revoke()
-            return
+            self._revoke(claim)
+
+    def _activate(self, claim):
+        resource = models.Resource(claim.resource, session=self.session)
+        resource.promote()
+        owner_id = resource.owner_id
+
+        if owner_id is not None:
+            if owner_id == claim.id:
+                return claim
+
+            elif claim.status == 'waiting':
+                raise exceptions.ConflictException(active_claim_id=owner_id,
+                        message='Resource is locked by another claim')
+            else:
+                raise exceptions.InvalidRequest(
+                        message='Claim has invalid status.',
+                        status=claim.status)
+
+        else:
+            raise exceptions.InvalidRequest(
+                message='Found no eligible claims for activating resource:  %s'
+                % claim.resource)
+
+    def _release(self, claim):
+        count = self.session.query(models.Lock
+                ).filter_by(claim_id=claim.id).delete()
+        if count != 1:
+            raise exceptions.InvalidRequest(claim_id=claim.id,
+                    status=claim.status, message='Failed to remove lock.')
+
+        claim.set_status('released')
+        self.session.commit()
+
+    def _revoke(self, claim):
+        query = self.session.query(models.Claim
+                ).filter_by(id=claim.id
+                ).with_for_update()
+        locked_claim = query.one()
+
+        if locked_claim.status in ['active', 'waiting']:
+            locked_claim.set_status('revoked')
+            if locked_claim.lock is not None:
+                self.session.delete(locked_claim.lock)
+            self.session.commit()
+        else:
+            self.session.rollback()
+            raise exceptions.InvalidRequest(claim_id=claim.id,
+                    status=locked_claim.status,
+                    message='Invalid status for revoke')

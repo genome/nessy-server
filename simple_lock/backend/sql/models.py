@@ -7,10 +7,56 @@ import datetime
 import sqlalchemy.ext.declarative
 
 
-__all__ = ['Base', 'Claim', 'StatusHistory', 'Lock']
+__all__ = ['Base', 'Claim', 'Resource', 'StatusHistory', 'Lock']
 
 
 Base = sqlalchemy.ext.declarative.declarative_base()
+
+
+class Resource(object):
+    def __init__(self, resource, session=None):
+        self.resource = resource
+        self.session = session
+
+    def promote(self):
+        self.expire_owning_claim()
+        try:
+            claim = self.session.query(Claim
+                    ).filter_by(resource=self.resource, status='waiting',
+                    ).order_by(Claim.created).first()
+            if claim is not None:
+                lock = Lock(claim=claim, resource=self.resource,
+                        expiration_time=claim.now + claim.initial_ttl)
+                claim.set_status('active')
+                self.session.add(lock)
+                self.session.commit()
+
+        except sqlalchemy.exc.IntegrityError:
+            self.session.rollback()
+
+    def expire_owning_claim(self):
+        try:
+            lock = self.session.query(Lock
+                    ).filter_by(resource=self.resource
+                    ).filter(Lock.expiration_time < func.now()
+                    ).first()
+
+            if lock:
+                claim = lock.claim
+                claim.set_status('expired')
+                self.session.delete(lock)
+                self.session.commit()
+
+        except sqlalchemy.exc.IntegrityError:
+            self.session.rollback()
+
+    @property
+    def owner_id(self):
+        lock = self.session.query(Lock
+                ).filter_by(resource=self.resource).first()
+        if lock:
+            return lock.claim_id
+
 
 
 _VALID_STATUSES = [
@@ -20,6 +66,7 @@ _VALID_STATUSES = [
     'revoked',
     'waiting',
 ]
+
 
 class Claim(Base):
     __tablename__ = 'claim'
@@ -42,6 +89,14 @@ class Claim(Base):
 
     now = column_property(select([func.now()]))
 
+    def set_status(self, new_status):
+        self.status = new_status
+        self.status_history.append(StatusHistory(status=new_status))
+        if new_status == 'active':
+            self.activated = self.now
+        elif new_status in ('released', 'revoked', 'expired'):
+            self.deactivated = self.now
+
     @property
     def ttl(self):
         if self.lock:
@@ -63,129 +118,6 @@ class Claim(Base):
             return self.deactivated - self.created
         else:
             return self.now - self.created
-
-    def get_session(self):
-        inspector = sqlalchemy.inspection.inspect(self)
-        return inspector.session
-
-    def update_ttl(self, new_ttl):
-        session = self.get_session()
-        self._expire_owning_claim(session)
-
-        count = session.query(Lock).filter_by(claim_id=self.id).update({
-            'expiration_time':
-                func.now() + datetime.timedelta(seconds=new_ttl)},
-            synchronize_session=False)
-
-        if count == 1:
-            session.commit()
-            return self
-
-        else:
-            session.rollback()
-            raise InvalidRequest(claim_id=self.id, status=self.status,
-                message='Failed to update ttl')
-
-    def promote_resource(self, session):
-        self._expire_owning_claim(session)
-        try:
-            claim = session.query(Claim
-                    ).filter_by(resource=self.resource, status='waiting',
-                    ).order_by(Claim.created).first()
-            if claim is not None:
-                lock = Lock(claim=claim, resource=self.resource,
-                        expiration_time=claim.now + claim.initial_ttl)
-                claim.status = 'active'
-                claim.activated = claim.now
-                claim.status_history.append(
-                        StatusHistory(status='active'))
-                session.add(lock)
-                session.commit()
-
-        except sqlalchemy.exc.IntegrityError:
-            session.rollback()
-
-        lock = session.query(Lock
-                ).filter_by(resource=self.resource).first()
-        if lock:
-            return lock.claim
-
-    def _expire_owning_claim(self, session):
-        try:
-            lock = session.query(Lock
-                    ).filter_by(resource=self.resource
-                    ).filter(Lock.expiration_time < func.now()
-                    ).first()
-
-            if lock:
-                claim = lock.claim
-                claim.status = 'expired'
-                claim.status_history.append(StatusHistory(status='expired'))
-                session.delete(lock)
-                session.commit()
-
-        except sqlalchemy.exc.IntegrityError:
-            session.rollback()
-
-    def activate(self):
-        session = self.get_session()
-        owner = self.promote_resource(session)
-
-        if owner is not None:
-            if owner.id == self.id:
-                return owner
-
-            elif self.status == 'waiting':
-                raise ConflictException(active_claim_id=owner.id,
-                        message='Resource is locked by another claim')
-            else:
-                raise InvalidRequest(message='Claim has invalid status.',
-                        status=self.status)
-
-        else:
-            raise InvalidRequest(
-                message='Found no eligible claims for activating resource:  %s'
-                % self.resource)
-
-    def release(self):
-        session = self.get_session()
-
-        count = session.query(Lock).filter_by(claim_id=self.id).delete()
-        if count != 1:
-            raise InvalidRequest(claim_id=self.id, status=self.status,
-                    message='Failed to remove lock.')
-
-        session.query(Claim).filter_by(id=self.id).update(
-                {'status': 'released', 'deactivated': func.now()},
-                synchronize_session=False)
-        self.status_history.append(StatusHistory(status='released'))
-
-        session.commit()
-
-        return self
-
-    def revoke(self):
-        session = self.get_session()
-
-        query = session.query(Claim
-                ).filter_by(id=self.id
-                ).with_for_update()
-        locked_claim = query.one()
-
-        if locked_claim.status in ['active', 'waiting']:
-            session.query(Claim).filter_by(id=self.id).update(
-                    {'status': 'revoked', 'deactivated': func.now()},
-                    synchronize_session=False)
-            locked_claim.status_history.append(
-                    StatusHistory(status='revoked'))
-            if locked_claim.lock is not None:
-                session.delete(locked_claim.lock)
-            session.commit()
-        else:
-            session.rollback()
-            raise InvalidRequest(claim_id=self.id,
-                    status=locked_claim.status,
-                    message='Invalid status for revoke')
 
 
 class StatusHistory(Base):

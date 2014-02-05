@@ -69,8 +69,6 @@ class SqlActor(ActorBase):
             return claim.activate()
         elif status == 'released':
             claim.release()
-            return
         else:
             assert status == 'revoked'
             claim.revoke()
-            return

@@ -69,9 +69,31 @@ class SqlActor(ActorBase):
 
     def _update_status(self, claim, status):
         if status == 'active':
-            return claim.activate()
+            return self._activate(claim)
         elif status == 'released':
             claim.release()
         else:
             assert status == 'revoked'
             claim.revoke()
+
+    def _activate(self, claim):
+        resource = models.Resource(claim.resource, session=self.session)
+        resource.promote()
+        owner_id = resource.owner_id
+
+        if owner_id is not None:
+            if owner_id == claim.id:
+                return claim
+
+            elif claim.status == 'waiting':
+                raise exceptions.ConflictException(active_claim_id=owner_id,
+                        message='Resource is locked by another claim')
+            else:
+                raise exceptions.InvalidRequest(
+                        message='Claim has invalid status.',
+                        status=claim.status)
+
+        else:
+            raise exceptions.InvalidRequest(
+                message='Found no eligible claims for activating resource:  %s'
+                % claim.resource)

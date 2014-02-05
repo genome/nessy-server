@@ -142,28 +142,6 @@ class Claim(Base):
             raise InvalidRequest(claim_id=self.id, status=self.status,
                 message='Failed to update ttl')
 
-    def activate(self):
-        session = self.get_session()
-        resource = Resource(self.resource, session=session)
-        resource.promote()
-        owner_id = resource.owner_id
-
-        if owner_id is not None:
-            if owner_id == self.id:
-                return self
-
-            elif self.status == 'waiting':
-                raise ConflictException(active_claim_id=owner_id,
-                        message='Resource is locked by another claim')
-            else:
-                raise InvalidRequest(message='Claim has invalid status.',
-                        status=self.status)
-
-        else:
-            raise InvalidRequest(
-                message='Found no eligible claims for activating resource:  %s'
-                % self.resource)
-
     def release(self):
         session = self.get_session()
 

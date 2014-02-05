@@ -74,7 +74,7 @@ class SqlActor(ActorBase):
             self._release(claim)
         else:
             assert status == 'revoked'
-            claim.revoke()
+            self._revoke(claim)
 
     def _activate(self, claim):
         resource = models.Resource(claim.resource, session=self.session)
@@ -107,3 +107,20 @@ class SqlActor(ActorBase):
 
         claim.set_status('released')
         self.session.commit()
+
+    def _revoke(self, claim):
+        query = self.session.query(models.Claim
+                ).filter_by(id=claim.id
+                ).with_for_update()
+        locked_claim = query.one()
+
+        if locked_claim.status in ['active', 'waiting']:
+            claim.set_status('revoked')
+            if locked_claim.lock is not None:
+                self.session.delete(locked_claim.lock)
+            self.session.commit()
+        else:
+            self.session.rollback()
+            raise exceptions.InvalidRequest(claim_id=claim.id,
+                    status=locked_claim.status,
+                    message='Invalid status for revoke')

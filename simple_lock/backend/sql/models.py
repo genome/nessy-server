@@ -142,25 +142,6 @@ class Claim(Base):
             raise InvalidRequest(claim_id=self.id, status=self.status,
                 message='Failed to update ttl')
 
-    def revoke(self):
-        session = self.get_session()
-
-        query = session.query(Claim
-                ).filter_by(id=self.id
-                ).with_for_update()
-        locked_claim = query.one()
-
-        if locked_claim.status in ['active', 'waiting']:
-            self.set_status('revoked')
-            if locked_claim.lock is not None:
-                session.delete(locked_claim.lock)
-            session.commit()
-        else:
-            session.rollback()
-            raise InvalidRequest(claim_id=self.id,
-                    status=locked_claim.status,
-                    message='Invalid status for revoke')
-
 
 class StatusHistory(Base):
     __tablename__ = 'status_history'

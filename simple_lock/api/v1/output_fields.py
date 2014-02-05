@@ -8,7 +8,7 @@ __all__ = [
 ]
 
 
-class MaybeTimedelta(fields.Raw):
+class Timedelta(fields.Raw):
     def format(self, value):
         return value.total_seconds()
 
@@ -25,12 +25,12 @@ status_history_fields = {
 
 claim_fields = {
     'url': fields.Url('claim', absolute=True),
-    'active_duration': MaybeTimedelta,
+    'active_duration': Timedelta,
     'created': fields.DateTime,
     'resource': fields.String,
     'status': fields.String,
     'status_history': fields.Nested(status_history_fields),
-    'ttl': MaybeTimedelta,
+    'ttl': Timedelta,
     'user_data': JSONEncoded,
-    'waiting_duration': MaybeTimedelta,
+    'waiting_duration': Timedelta,
 }

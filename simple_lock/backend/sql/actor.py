@@ -63,7 +63,8 @@ class SqlActor(ActorBase):
 
         if ttl is not None:
             return claim.update_ttl(ttl)
-        elif status is not None:
+        else:
+            assert status is not None
             return self._update_status(claim, status)
 
     def _update_status(self, claim, status):

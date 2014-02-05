@@ -119,10 +119,6 @@ class Claim(Base):
         else:
             return self.now - self.created
 
-    def get_session(self):
-        inspector = sqlalchemy.inspection.inspect(self)
-        return inspector.session
-
 
 class StatusHistory(Base):
     __tablename__ = 'status_history'

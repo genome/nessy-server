@@ -1,4 +1,4 @@
-from ..exceptions import ConflictException
+from ..exceptions import ConflictException, InvalidRequest
 from sqlalchemy import Column, UniqueConstraint
 from sqlalchemy import DateTime, ForeignKey, Enum, Integer, Interval, Text
 from sqlalchemy import func, select
@@ -83,7 +83,7 @@ class Claim(Base):
 
         else:
             session.rollback()
-            raise ConflictException(claim_id=self.id, status=self.status,
+            raise InvalidRequest(claim_id=self.id, status=self.status,
                 message='Failed to update ttl')
 
     def promote_resource(self, session):
@@ -135,12 +135,15 @@ class Claim(Base):
             if owner.id == self.id:
                 return owner
 
-            else:
+            elif self.status == 'waiting':
                 raise ConflictException(active_claim_id=owner.id,
                         message='Resource is locked by another claim')
+            else:
+                raise InvalidRequest(message='Claim has invalid status.',
+                        status=self.status)
 
         else:
-            raise ConflictException(
+            raise InvalidRequest(
                 message='Found no eligible claims for activating resource:  %s'
                 % self.resource)
 
@@ -149,7 +152,7 @@ class Claim(Base):
 
         count = session.query(Lock).filter_by(claim_id=self.id).delete()
         if count != 1:
-            raise ConflictException(claim_id=self.id, status=self.status,
+            raise InvalidRequest(claim_id=self.id, status=self.status,
                     message='Failed to remove lock.')
 
         session.query(Claim).filter_by(id=self.id).update(
@@ -180,7 +183,7 @@ class Claim(Base):
             session.commit()
         else:
             session.rollback()
-            raise ConflictException(claim_id=self.id,
+            raise InvalidRequest(claim_id=self.id,
                     status=locked_claim.status,
                     message='Invalid status for revoke')
 

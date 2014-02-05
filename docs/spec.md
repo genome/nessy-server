@@ -130,15 +130,15 @@ Updating `status` from 'active' or 'waiting' to 'revoked' should:
 - HTTP 400 (Bad Request)
     - Given unknown parameters
     - Invalid values for given parameters
-- HTTP 404 (Not Found)
-    - Non-existent claim
-- HTTP 409 (Conflict)
     - Updating from "final" states
         - 'expired'
         - 'released'
         - 'revoked'
     - Updating from 'waiting' to 'released'
     - Updating `ttl` when `status` is not 'active'
+- HTTP 404 (Not Found)
+    - Non-existent claim
+- HTTP 409 (Conflict)
     - Updating `status` from 'waiting' to 'active' with contention
 
 

@@ -15,7 +15,7 @@ class Heartbeat(TransitionBase):
         if response.status_code == 200:
             state.noop()
 
-        elif response.status_code == 409:
+        elif response.status_code == 400:
             state.set_resource_state(resource, 'expired', claim_url=None)
 
         else:

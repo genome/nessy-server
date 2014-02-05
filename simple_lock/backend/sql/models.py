@@ -142,19 +142,6 @@ class Claim(Base):
             raise InvalidRequest(claim_id=self.id, status=self.status,
                 message='Failed to update ttl')
 
-    def release(self):
-        session = self.get_session()
-
-        count = session.query(Lock).filter_by(claim_id=self.id).delete()
-        if count != 1:
-            raise InvalidRequest(claim_id=self.id, status=self.status,
-                    message='Failed to remove lock.')
-
-        self.set_status('released')
-        session.commit()
-
-        return self
-
     def revoke(self):
         session = self.get_session()
 

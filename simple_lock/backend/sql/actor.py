@@ -71,7 +71,7 @@ class SqlActor(ActorBase):
         if status == 'active':
             return self._activate(claim)
         elif status == 'released':
-            claim.release()
+            self._release(claim)
         else:
             assert status == 'revoked'
             claim.revoke()
@@ -97,3 +97,13 @@ class SqlActor(ActorBase):
             raise exceptions.InvalidRequest(
                 message='Found no eligible claims for activating resource:  %s'
                 % claim.resource)
+
+    def _release(self, claim):
+        count = self.session.query(models.Lock
+                ).filter_by(claim_id=claim.id).delete()
+        if count != 1:
+            raise exceptions.InvalidRequest(claim_id=claim.id,
+                    status=claim.status, message='Failed to remove lock.')
+
+        claim.set_status('released')
+        self.session.commit()

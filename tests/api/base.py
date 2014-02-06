@@ -1,4 +1,4 @@
-from simple_lock.api import application
+from nessy.api import application
 import simplejson
 import os
 import unittest

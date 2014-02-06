@@ -2,7 +2,7 @@ from . import request_parsers
 from .output_fields import claim_fields
 from flask import g, url_for
 from flask.ext.restful import Resource, marshal
-from simple_lock.backend import exceptions
+from nessy.backend import exceptions
 
 
 __all__ = ['ClaimListView', 'ClaimView']

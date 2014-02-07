@@ -1,5 +1,5 @@
 [run]
-omit = simple_lock/api/wsgi.py
+omit = nessy/api/wsgi.py
 branch = True
 
 [report]

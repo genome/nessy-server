@@ -19,5 +19,6 @@ class Heartbeat(TransitionBase):
             state.set_resource_state(resource, 'expired', claim_url=None)
 
         else:
-            raise RuntimeError('Unexpected code from patch: %d'
-                    % response.status_code)
+            raise RuntimeError('Unexpected code from patch (%s): %d.  %s'
+                    % (self.__class__.__name__, response.status_code,
+                        response.text))

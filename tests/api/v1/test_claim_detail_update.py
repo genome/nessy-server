@@ -148,10 +148,18 @@ class ClaimPatchError(ClaimPatchBase):
         invalid_response = self.patch(self.resource_url, {'ttl': -7})
         self.assertEqual(400, invalid_response.status_code)
 
-    def test_updating_expired_claim_should_return_400(self):
+    def test_updating_expired_claim_ttl_should_return_400(self):
         self.patch(self.resource_url, {'ttl': 0.005})
         time.sleep(0.005)
         expired_response = self.patch(self.resource_url, {'ttl': 600})
+        self.assertEqual(400, expired_response.status_code)
+
+    def test_updating_expired_claim_status_should_return_400(self):
+        self.patch(self.resource_url, {'ttl': 0.005})
+        time.sleep(0.005)
+        r = self.post(URL, self.post_data)  # New claim should get the resource
+        self.assertEqual(201, r.status_code)
+        expired_response = self.patch(self.resource_url, {'status': 'revoked'})
         self.assertEqual(400, expired_response.status_code)
 
     def test_updating_released_claim_should_return_400(self):

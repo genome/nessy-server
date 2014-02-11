@@ -5,10 +5,6 @@ class FactoryBase(object):
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
-    def initialize(self):
-        pass  # pragma: no cover
-
-    @abc.abstractmethod
     def purge(self):
         pass  # pragma: no cover
 

@@ -17,7 +17,6 @@ def create_app(database_string, purge=False):
 
 def _create_factory(database_string, purge):
     factory = backend.SqlActorFactory(database_string)
-    factory.initialize()
     if purge:
         factory.purge()
 

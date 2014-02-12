@@ -1,7 +1,7 @@
 # REST-Based Locking Service
 
 [![Build Status](https://travis-ci.org/genome/nessy-server.png?branch=master)](https://travis-ci.org/genome/nessy-server)
-[![Coverage Status](https://coveralls.io/repos/genome/nessy-server/badge.png)](https://coveralls.io/r/genome/nessy-server)
+[![Coverage Status](https://coveralls.io/repos/genome/nessy-server/badge.png?branch=master)](https://coveralls.io/r/genome/nessy-server?branch=master)
 
 The purpose of this project is to provide a replacement for the network disk
 based locking system currently in place in the

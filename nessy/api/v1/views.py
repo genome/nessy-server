@@ -1,20 +1,30 @@
 from . import request_parsers
 from .output_fields import claim_fields
+from contextlib import contextmanager
 from flask import g, url_for
 from flask.ext.restful import Resource, marshal
 from nessy.backend import exceptions
-from statsd import Timer
-
+import os
 
 __all__ = ['ClaimListView', 'ClaimView']
 
 
-timer = Timer('nessy-server')
+@contextmanager
+def timer(label):
+    # NOTE: We load the statsd module lazily, because it binds configuration
+    # globally, which isn't safe when running with uWSGI in prefork mode.
+    import statsd
+    statsd.Connection.set_defaults(
+            host=os.environ.get('LOCKING_STATSD_HOST', 'localhost'),
+            port=os.environ.get('LOCKING_STATSD_PORT', 8125))
+    timer = statsd.Timer('nessy-server')
+    with timer.time(label):
+        yield
 
 
 class ClaimListView(Resource):
     def get(self):
-        with timer.time('list-get'):
+        with timer('list-get'):
             data, errors = request_parsers.get_claim_list_data()
             if errors:
                 return errors, 400
@@ -23,7 +33,7 @@ class ClaimListView(Resource):
             return marshal(result, claim_fields)
 
     def post(self):
-        with timer.time('list-post'):
+        with timer('list-post'):
             data, errors = request_parsers.get_claim_post_data()
             if errors:
                 return errors, 400
@@ -42,7 +52,7 @@ def _construct_claim_url(claim_id):
 
 class ClaimView(Resource):
     def get(self, id):
-        with timer.time('detail-get'):
+        with timer('detail-get'):
             claim = g.actor.get_claim(id)
             if claim:
                 return marshal(claim, claim_fields)
@@ -50,7 +60,7 @@ class ClaimView(Resource):
                 return {'message': 'No claim found'}, 404
 
     def patch(self, id):
-        with timer.time('detail-patch'):
+        with timer('detail-patch'):
             data, errors = request_parsers.get_claim_update_data()
             if errors:
                 return errors, 400

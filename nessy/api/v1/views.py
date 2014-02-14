@@ -1,7 +1,7 @@
 from . import request_parsers
 from .output_fields import claim_fields
 from contextlib import contextmanager
-from flask import g, url_for
+from flask import g, request, url_for
 from flask.ext.restful import Resource, marshal
 from nessy.backend import exceptions
 import os
@@ -25,6 +25,7 @@ def timer(label):
 class ClaimListView(Resource):
     def get(self):
         with timer('list-get'):
+            request.data  # read entire request body (avoid uWSGI issues)
             data, errors = request_parsers.get_claim_list_data()
             if errors:
                 return errors, 400
@@ -34,6 +35,7 @@ class ClaimListView(Resource):
 
     def post(self):
         with timer('list-post'):
+            request.data  # read entire request body (avoid uWSGI issues)
             data, errors = request_parsers.get_claim_post_data()
             if errors:
                 return errors, 400
@@ -53,6 +55,7 @@ def _construct_claim_url(claim_id):
 class ClaimView(Resource):
     def get(self, id):
         with timer('detail-get'):
+            request.data  # read entire request body (avoid uWSGI issues)
             claim = g.actor.get_claim(id)
             if claim:
                 return marshal(claim, claim_fields)
@@ -61,6 +64,7 @@ class ClaimView(Resource):
 
     def patch(self, id):
         with timer('detail-patch'):
+            request.data  # read entire request body (avoid uWSGI issues)
             data, errors = request_parsers.get_claim_update_data()
             if errors:
                 return errors, 400

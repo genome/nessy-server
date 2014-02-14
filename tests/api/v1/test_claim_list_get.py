@@ -71,6 +71,14 @@ class ClaimListGetFilterSuccessTest(APITest):
         max_response = self.get(URL, maximum_waiting_duration=0.010)
         self.assertEqual(2, len(max_response.DATA))
 
+    def test_filter_by_resource_and_active_status(self):
+        response = self.get(URL, resource='foo', status='active')
+        self.assertEqual(1, len(response.DATA))
+
+    def test_filter_by_resource_and_waiting_status(self):
+        response = self.get(URL, resource='foo', status='waiting')
+        self.assertEqual(2, len(response.DATA))
+
 
 class ClaimListGetFilterTTLTest(APITest):
     def setUp(self):

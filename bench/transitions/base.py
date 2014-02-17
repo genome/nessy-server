@@ -46,6 +46,8 @@ class TransitionBase(object):
             try:
                 response = method(url, data=simplejson.dumps(data),
                         params=params, headers=self._headers)
+                if response.status_code == 500:
+                    raise RuntimeError('Got 500 response from server')
                 done = True
             except Exception as e:
                 print "Error at", self.__class__.__name__, method_name

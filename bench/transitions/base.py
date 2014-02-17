@@ -40,8 +40,20 @@ class TransitionBase(object):
         session =  self.sessions[session_id]
         method = getattr(session, method_name)
         begin = datetime.datetime.now()
-        response = method(url, data=simplejson.dumps(data),
-                params=params, headers=self._headers)
+
+        done = False
+        while not done:
+            try:
+                response = method(url, data=simplejson.dumps(data),
+                        params=params, headers=self._headers)
+                if response.status_code == 500:
+                    raise RuntimeError('Got 500 response from server: %s'
+                            % response.text)
+                done = True
+            except Exception as e:
+                print "Error at", self.__class__.__name__, method_name
+                print e
+
         end = datetime.datetime.now()
         self.stats.add_request(self.__class__.__name__, method_name,
                 response.status_code,

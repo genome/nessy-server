@@ -34,7 +34,9 @@ class SqlActorFactory(FactoryBase):
         if self._Session is None:
             self._initialize_session()
 
-        return self._Session()
+        # NOTE:  autoflush must be off to avoid a deadlock inside
+        # Resource.promote
+        return self._Session(autoflush=False)
 
     def _initialize_session(self):
         while self._Session is None:

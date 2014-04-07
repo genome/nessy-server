@@ -5,9 +5,16 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import backref, column_property, relationship
 import datetime
 import sqlalchemy.ext.declarative
+import sqlalchemy.orm.exc
 
 
 __all__ = ['Base', 'Claim', 'Resource', 'StatusHistory', 'Lock']
+
+
+_CONSISTENCY_EXCEPTIONS = (
+    sqlalchemy.exc.IntegrityError,
+    sqlalchemy.orm.exc.StaleDataError
+)
 
 
 Base = sqlalchemy.ext.declarative.declarative_base()
@@ -31,7 +38,7 @@ class Resource(object):
                 self.session.add(lock)
                 self.session.commit()
 
-        except sqlalchemy.exc.IntegrityError:
+        except _CONSISTENCY_EXCEPTIONS:
             self.session.rollback()
 
     def expire_owning_claim(self):
@@ -47,7 +54,7 @@ class Resource(object):
                 self.session.delete(lock)
                 self.session.commit()
 
-        except sqlalchemy.exc.IntegrityError:
+        except _CONSISTENCY_EXCEPTIONS:
             self.session.rollback()
 
     @property

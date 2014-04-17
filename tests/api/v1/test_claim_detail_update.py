@@ -105,11 +105,11 @@ class ClaimPatchSuccess(ClaimPatchBase):
                 {'status': 'revoked'})
         self.assertEqual(204, response.status_code)
 
-    def test_update_ttl_while_status_acitve_should_return_200(self):
+    def test_update_ttl_while_status_active_should_return_200(self):
         update_response = self.patch(self.resource_url, {'ttl': 600})
         self.assertEqual(200, update_response.status_code)
 
-    def test_update_ttl_while_status_acitve_should_set_ttl(self):
+    def test_update_ttl_while_status_active_should_set_ttl(self):
         update_response = self.patch(self.resource_url, {'ttl': 600})
         self.assertLessEqual(550, update_response.DATA['ttl'])
 

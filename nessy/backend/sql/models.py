@@ -83,7 +83,7 @@ class Claim(Base):
     ] + CANCELLED_STATUSES
 
     VALID_STATUSES = [
-        'expired',
+        'active',
         'waiting',
     ] + FINAL_STATUSES
 

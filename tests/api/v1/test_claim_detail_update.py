@@ -113,6 +113,19 @@ class ClaimPatchSuccess(ClaimPatchBase):
         update_response = self.patch(self.resource_url, {'ttl': 600})
         self.assertLessEqual(550, update_response.DATA['ttl'])
 
+    def test_updating_ttl_while_ttl_is_negative_should_return_200(self):
+        self.patch(self.resource_url, {'ttl': 0.005})
+        time.sleep(0.005)
+        response = self.patch(self.resource_url, {'ttl': 600})
+        self.assertEqual(200, response.status_code)
+
+    def test_updating_ttl_while_ttl_is_negative_should_update_ttl(self):
+        self.patch(self.resource_url, {'ttl': 0.005})
+        time.sleep(0.005)
+        response = self.patch(self.resource_url, {'ttl': 600})
+        self.assertEqual(200, response.status_code)
+        self.assertGreater(response.DATA['ttl'], 0)
+
 
 class ClaimPatchError(ClaimPatchBase):
 # TODO
@@ -147,12 +160,6 @@ class ClaimPatchError(ClaimPatchBase):
     def test_updating_claim_with_negative_ttl_should_return_400(self):
         invalid_response = self.patch(self.resource_url, {'ttl': -7})
         self.assertEqual(400, invalid_response.status_code)
-
-    def test_updating_expired_claim_ttl_should_return_400(self):
-        self.patch(self.resource_url, {'ttl': 0.005})
-        time.sleep(0.005)
-        expired_response = self.patch(self.resource_url, {'ttl': 600})
-        self.assertEqual(400, expired_response.status_code)
 
     def test_updating_expired_claim_status_should_return_400(self):
         self.patch(self.resource_url, {'ttl': 0.005})

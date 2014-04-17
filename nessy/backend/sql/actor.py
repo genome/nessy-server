@@ -90,11 +90,23 @@ class SqlActor(ActorBase):
     def _update_status(self, claim, status):
         if status == 'active':
             return self._activate(claim)
+
         elif status == 'released':
             self._release(claim)
-        else:
-            assert status == 'revoked'
+
+        elif status == 'withdrawn':
+            self._withdraw(claim)
+
+        elif status == 'aborted':
+            self._abort(claim)
+
+        elif status == 'revoked':
             self._revoke(claim)
+
+        else:  # pragma: no cover
+            # The view is currently forbidding this, but we should still raise
+            # a reasonable exception here.
+            assert False
 
     def _activate(self, claim):
         resource = models.Resource(claim.resource, session=self.session)
@@ -128,14 +140,23 @@ class SqlActor(ActorBase):
         claim.set_status('released')
         self.session.commit()
 
+    def _withdraw(self, claim):
+        self._cancel(claim, 'withdrawn')
+
+    def _abort(self, claim):
+        self._cancel(claim, 'aborted')
+
     def _revoke(self, claim):
+        self._cancel(claim, 'revoked')
+
+    def _cancel(self, claim, status):
         query = self.session.query(models.Claim
                 ).filter_by(id=claim.id
                 ).with_for_update()
         locked_claim = query.one()
 
         if locked_claim.status in ['active', 'waiting']:
-            locked_claim.set_status('revoked')
+            locked_claim.set_status(status)
             if locked_claim.lock is not None:
                 self.session.delete(locked_claim.lock)
             self.session.commit()
@@ -143,4 +164,4 @@ class SqlActor(ActorBase):
             self.session.rollback()
             raise exceptions.InvalidRequest(claim_id=claim.id,
                     status=locked_claim.status,
-                    message='Invalid status for revoke')
+                    message='Invalid status for cancellation')

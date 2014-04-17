@@ -85,8 +85,16 @@ class ClaimPatchToCancelledStatusMixin(object):
             self.assertEqual(400, response.status_code)
 
 
+class ClaimPatchToAborted(ClaimPatchToCancelledStatusMixin, ClaimPatchBase):
+    status = 'aborted'
+
+
 class ClaimPatchToRevoked(ClaimPatchToCancelledStatusMixin, ClaimPatchBase):
     status = 'revoked'
+
+
+class ClaimPatchToWithdrawn(ClaimPatchToCancelledStatusMixin, ClaimPatchBase):
+    status = 'withdrawn'
 
 
 class ClaimPatchSuccess(ClaimPatchBase):

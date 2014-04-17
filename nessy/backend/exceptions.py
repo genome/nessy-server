@@ -12,3 +12,10 @@ class ConflictException(BackendException):
 
 class InvalidRequest(BackendException):
     pass
+
+
+class DatabaseError(BackendException):
+    pass
+
+class UnexpectedError(BackendException):
+    pass

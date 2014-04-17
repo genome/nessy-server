@@ -84,8 +84,20 @@ class SqlActor(ActorBase):
 
         else:
             self.session.rollback()
-            raise exceptions.InvalidRequest(claim_id=claim.id,
-                    status=claim.status, message='Failed to update ttl')
+
+            if count == 0:
+                raise exceptions.InvalidRequest(claim_id=claim.id,
+                        status=claim.status, message='Failed to update ttl')
+
+            elif count in (-1, None):
+                raise exceptions.DatabaseError(claim_id=claim.id,
+                        status=claim.status, message='Unexpected reponse from '
+                        'database -- possibly disconnected')
+
+            else:  # pragma: no cover
+                raise exceptions.UnexpectedError(claim_id=claim.id,
+                        status=claim.status,
+                        message='Unexpected error while updating ttl')
 
     def _update_status(self, claim, status):
         if status == 'active':

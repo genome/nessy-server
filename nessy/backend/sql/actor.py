@@ -69,9 +69,6 @@ class SqlActor(ActorBase):
             return self._update_status(claim, status)
 
     def _update_ttl(self, claim, new_ttl):
-        resource = models.Resource(claim.resource, session=self.session)
-        resource.expire_owning_claim()
-
         count = self.session.query(models.Lock
                 ).filter_by(claim_id=claim.id).update({
                     'expiration_time':

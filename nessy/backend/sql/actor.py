@@ -94,14 +94,8 @@ class SqlActor(ActorBase):
         elif status == 'released':
             self._release(claim)
 
-        elif status == 'withdrawn':
-            self._withdraw(claim)
-
-        elif status == 'aborted':
-            self._abort(claim)
-
-        elif status == 'revoked':
-            self._revoke(claim)
+        elif status in claim.CANCELLED_STATUSES:
+            self._cancel(claim, status)
 
         else:  # pragma: no cover
             # The view is currently forbidding this, but we should still raise
@@ -139,15 +133,6 @@ class SqlActor(ActorBase):
 
         claim.set_status('released')
         self.session.commit()
-
-    def _withdraw(self, claim):
-        self._cancel(claim, 'withdrawn')
-
-    def _abort(self, claim):
-        self._cancel(claim, 'aborted')
-
-    def _revoke(self, claim):
-        self._cancel(claim, 'revoked')
 
     def _cancel(self, claim, status):
         query = self.session.query(models.Claim

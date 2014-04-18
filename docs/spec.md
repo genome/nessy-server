@@ -6,6 +6,21 @@
 - Claim `status` should be updated by the server from 'active' to 'expired'
   after that claim's `ttl` is less than 0.
 
+## Claim Statuses
+There are seven states a claim can be in at a particular time:
+- 'aborted' - The client needed to abandon its claim on the resource regardless
+  of whether it was 'active' or 'waiting'.  Clients should use this to cancel a
+  claim in response to an error in the client.
+- 'active' - This claim is the current owner of the specified resource.
+- 'expired' - The client creating the claim did not update or release the claim
+  before its `ttl` expired.  Ownership of the resource is likely to have been
+  passed on to another claim.
+- 'released' - The claim owned the resource for some time, and gave up ownership
+  under normal conditions.
+- 'revoked' - The claim was cancelled by an administrator or monitoring
+  process.
+- 'waiting' - This claim is in the queue to become the owner of its resource.
+- 'withdrawn' - The client decided to withdraw its claim for the resource.
 
 ## Performance
 Should support N requests per second.
@@ -22,7 +37,6 @@ OAuth and Shibboleth.
 ## Miscellaneous Details
 - times should be in seconds as floats (`ttl`, `active_duration`,
   `waiting_duration`)
-- 'revoked' `status` is optional (may use 'expired' instead)
 
 
 ## HTTP Requests
@@ -98,7 +112,12 @@ be specified in a single request.
 `status`
 
 - string
-- valid values for update: 'active', 'released', 'revoked'
+- valid values for update:
+    - 'aborted'
+    - 'active'
+    - 'released'
+    - 'revoked'
+    - 'withdrawn'
 
 ### Successful Results
 Updating `status` from 'waiting' to 'active' without contention should:
@@ -121,19 +140,22 @@ Updating `status` from 'active' to 'released' should:
 - return HTTP 204 (No Content)
 - set `status` to 'released'
 
-Updating `status` from 'active' or 'waiting' to 'revoked' should:
+Updating `status` from 'active' or 'waiting' to a cancelled state ('aborted',
+'revoked', or 'withdrawn') should:
 
 - return HTTP 204 (No Content)
-- set `status` to 'revoked'
+- set `status` to the requested value
 
 ### Errors
 - HTTP 400 (Bad Request)
     - Given unknown parameters
     - Invalid values for given parameters
     - Updating from "final" states
+        - 'aborted'
         - 'expired'
         - 'released'
         - 'revoked'
+        - 'withdrawn'
     - Updating from 'waiting' to 'released'
     - Updating `ttl` when `status` is not 'active'
 - HTTP 404 (Not Found)

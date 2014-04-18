@@ -66,22 +66,31 @@ class Resource(object):
 
 
 
-_VALID_STATUSES = [
-    'active',
-    'expired',
-    'released',
-    'revoked',
-    'waiting',
-]
-
-
 class Claim(Base):
     __tablename__ = 'claim'
+
+    STATUS_ENUM_NAME = 'claim_status_enum'
+
+    CANCELLED_STATUSES = [
+        'aborted',
+        'revoked',
+        'withdrawn',
+    ]
+
+    FINAL_STATUSES = [
+        'expired',
+        'released',
+    ] + CANCELLED_STATUSES
+
+    VALID_STATUSES = [
+        'active',
+        'waiting',
+    ] + FINAL_STATUSES
 
     id = Column(Integer, primary_key=True)
     resource = Column(Text, index=True, nullable=False)
     initial_ttl = Column(Interval, index=True, nullable=False)
-    status = Column(Enum(*_VALID_STATUSES, name='foo'), index=True,
+    status = Column(Enum(*VALID_STATUSES, name=STATUS_ENUM_NAME), index=True,
             nullable=False)
 
     created = Column(DateTime(timezone=True), index=True, default=func.now(),
@@ -101,7 +110,7 @@ class Claim(Base):
         self.status_history.append(StatusHistory(status=new_status))
         if new_status == 'active':
             self.activated = self.now
-        elif new_status in ('released', 'revoked', 'expired'):
+        elif new_status in self.FINAL_STATUSES:
             self.deactivated = self.now
 
     @property
@@ -136,8 +145,8 @@ class StatusHistory(Base):
     id = Column(Integer, primary_key=True)
     timestamp = Column(DateTime(timezone=True), default=func.now(),
             nullable=False)
-    status = Column(Enum(*_VALID_STATUSES, name='foo'), index=True,
-            nullable=False)
+    status = Column(Enum(*Claim.VALID_STATUSES, name=Claim.STATUS_ENUM_NAME),
+            index=True, nullable=False)
     claim_id = Column(Integer, ForeignKey('claim.id'), nullable=False)
 
     claim = relationship('Claim',

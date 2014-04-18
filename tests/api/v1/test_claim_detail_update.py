@@ -1,4 +1,5 @@
 from ..base import APITest
+import abc
 import time
 
 
@@ -15,6 +16,85 @@ class ClaimPatchBase(APITest):
 
         self.post_response = self.post(URL, self.post_data)
         self.resource_url = self.post_response.headers['Location']
+
+
+class ClaimPatchToCancelledStatusMixin(object):
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractproperty
+    def status(self):
+        pass
+
+    def _set_status(self):
+        return self.patch(self.resource_url, {'status': self.status})
+
+    def test_update_from_active_to_cancelled_should_return_204(self):
+        update_response = self._set_status()
+        self.assertEqual(204, update_response.status_code)
+
+    def test_update_status_from_active_to_cancelled_should_set_status(self):
+        update_response = self._set_status()
+        get_response = self.get(self.resource_url)
+        self.assertEqual(self.status, get_response.DATA['status'])
+
+    def test_update_status_from_active_to_cancelled_should_finalize_active_duration(self):
+        update_response = self._set_status()
+        first_get_response = self.get(self.resource_url)
+        time.sleep(0.010)
+        second_get_response = self.get(self.resource_url)
+        self.assertEqual(first_get_response.DATA['active_duration'],
+                second_get_response.DATA['active_duration'])
+
+    def test_update_status_from_waiting_to_cancelled_should_return_204(self):
+        second_post_response = self.post(URL, self.post_data)
+        url = second_post_response.headers['Location']
+        update_response = self.patch(url, {'status': self.status})
+        self.assertEqual(204, update_response.status_code)
+
+    def test_update_status_from_waiting_to_cancelled_should_set_status(self):
+        second_post_response = self.post(URL, self.post_data)
+        url = second_post_response.headers['Location']
+        update_response = self.patch(url, {'status': self.status})
+        get_response = self.get(url)
+        self.assertEqual(self.status, get_response.DATA['status'])
+
+    def test_update_status_from_waiting_to_cancelled_should_finalize_waiting_duration(self):
+        second_post_response = self.post(URL, self.post_data)
+        url = second_post_response.headers['Location']
+        update_response = self.patch(url, {'status': self.status})
+        first_get_response = self.get(url)
+        time.sleep(0.010)
+        second_get_response = self.get(url)
+        self.assertEqual(first_get_response.DATA['waiting_duration'],
+                second_get_response.DATA['waiting_duration'])
+
+    def test_updating_expired_claim_status_to_cancelled_should_return_400(self):
+        self.patch(self.resource_url, {'ttl': 0.005})
+        time.sleep(0.005)
+        r = self.post(URL, self.post_data)  # New claim should get the resource
+        self.assertEqual(201, r.status_code)
+        expired_response = self.patch(self.resource_url,
+                {'status': self.status})
+        self.assertEqual(400, expired_response.status_code)
+
+    def test_updating_cancelled_claim_status_should_return_400(self):
+        self._set_status()
+        statuses = ['active', 'released', 'revoked']
+        for status in statuses:
+            response = self.patch(self.resource_url, {'status': status})
+            self.assertEqual(400, response.status_code)
+
+
+class ClaimPatchToAborted(ClaimPatchToCancelledStatusMixin, ClaimPatchBase):
+    status = 'aborted'
+
+
+class ClaimPatchToRevoked(ClaimPatchToCancelledStatusMixin, ClaimPatchBase):
+    status = 'revoked'
+
+
+class ClaimPatchToWithdrawn(ClaimPatchToCancelledStatusMixin, ClaimPatchBase):
+    status = 'withdrawn'
 
 
 class ClaimPatchSuccess(ClaimPatchBase):
@@ -38,33 +118,6 @@ class ClaimPatchSuccess(ClaimPatchBase):
         second_get_response = self.get(self.resource_url)
         self.assertEqual(first_get_response.DATA['active_duration'],
                 second_get_response.DATA['active_duration'])
-
-    def test_update_status_from_active_to_revoked_should_return_204(self):
-        update_response = self.patch(self.resource_url, {'status': 'revoked'})
-        self.assertEqual(204, update_response.status_code)
-
-    def test_update_status_from_active_to_revoked_should_set_status(self):
-        update_response = self.patch(self.resource_url, {'status': 'revoked'})
-        get_response = self.get(self.resource_url)
-        self.assertEqual('revoked', get_response.DATA['status'])
-
-    def test_update_status_from_active_to_revoked_should_finalize_active_duration(self):
-        update_response = self.patch(self.resource_url, {'status': 'revoked'})
-        first_get_response = self.get(self.resource_url)
-        time.sleep(0.010)
-        second_get_response = self.get(self.resource_url)
-        self.assertEqual(first_get_response.DATA['active_duration'],
-                second_get_response.DATA['active_duration'])
-
-    def test_update_status_from_waiting_to_revoked_should_finalize_waiting_duration(self):
-        second_post_response = self.post(URL, self.post_data)
-        url = second_post_response.headers['Location']
-        update_response = self.patch(url, {'status': 'revoked'})
-        first_get_response = self.get(url)
-        time.sleep(0.010)
-        second_get_response = self.get(url)
-        self.assertEqual(first_get_response.DATA['waiting_duration'],
-                second_get_response.DATA['waiting_duration'])
 
     def test_update_status_from_waiting_to_active_should_return_200(self):
         second_post_response = self.post(URL, self.post_data)
@@ -99,17 +152,11 @@ class ClaimPatchSuccess(ClaimPatchBase):
         self.assertIsInstance(update_response.DATA['active_duration'], float)
         self.assertLess(0, update_response.DATA['active_duration'])
 
-    def test_update_status_from_waiting_to_revoked_should_return_204(self):
-        second_post_response = self.post(URL, self.post_data)
-        response = self.patch(second_post_response.headers['Location'],
-                {'status': 'revoked'})
-        self.assertEqual(204, response.status_code)
-
-    def test_update_ttl_while_status_acitve_should_return_200(self):
+    def test_update_ttl_while_status_active_should_return_200(self):
         update_response = self.patch(self.resource_url, {'ttl': 600})
         self.assertEqual(200, update_response.status_code)
 
-    def test_update_ttl_while_status_acitve_should_set_ttl(self):
+    def test_update_ttl_while_status_active_should_set_ttl(self):
         update_response = self.patch(self.resource_url, {'ttl': 600})
         self.assertLessEqual(550, update_response.DATA['ttl'])
 
@@ -171,13 +218,6 @@ class ClaimPatchError(ClaimPatchBase):
 
     def test_updating_released_claim_should_return_400(self):
         self.patch(self.resource_url, {'status': 'released'})
-        statuses = ['active', 'released', 'revoked']
-        for status in statuses:
-            response = self.patch(self.resource_url, {'status': status})
-            self.assertEqual(400, response.status_code)
-
-    def test_updating_revoked_claim_should_return_400(self):
-        self.patch(self.resource_url, {'status': 'revoked'})
         statuses = ['active', 'released', 'revoked']
         for status in statuses:
             response = self.patch(self.resource_url, {'status': status})

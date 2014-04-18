@@ -30,6 +30,14 @@ def get_claim_post_data():
     return data, errors
 
 
+_VALID_UPDATE_STATUSES = [
+    'aborted',
+    'active',
+    'released',
+    'revoked',
+    'withdrawn',
+]
+
 _claim_update = reqparse.RequestParser()
 _claim_update.add_argument('ttl', type=float)
 _claim_update.add_argument('status', type=str)
@@ -39,7 +47,7 @@ def get_claim_update_data():
     errors = {}
 
     if data['status'] is not None:
-        if data['status'] not in ['active', 'released', 'revoked']:
+        if data['status'] not in _VALID_UPDATE_STATUSES:
             errors['status'] = 'Invalid value for status'
         if data['ttl'] is not None:
             errors['extra-parameters'] =\

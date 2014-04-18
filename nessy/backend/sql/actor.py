@@ -149,4 +149,5 @@ class SqlActor(ActorBase):
             self.session.rollback()
             raise exceptions.InvalidRequest(claim_id=claim.id,
                     status=locked_claim.status,
-                    message='Invalid status for cancellation')
+                    message='Cannot set status to "%s" from "%s"' % (
+                        status, locked_claim.status))

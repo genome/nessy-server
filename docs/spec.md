@@ -8,18 +8,19 @@
 
 ## Claim Statuses
 There are seven states a claim can be in at a particular time:
-- 'aborted' - The client needed to quickly abandon its claim on the resource.
+- 'aborted' - The client needed to abandon its claim on the resource regardless
+  of whether it was 'active' or 'waiting'.  Clients should use this to cancel a
+  claim in response to an error in the client.
 - 'active' - This claim is the current owner of the specified resource.
 - 'expired' - The client creating the claim did not update or release the claim
   before its `ttl` expired.  Ownership of the resource is likely to have been
   passed on to another claim.
-- 'released' - The claim owned the lock for some time, and gave up ownership
+- 'released' - The claim owned the resource for some time, and gave up ownership
   under normal conditions.
-- 'revoked' - The claim was invalidated by an administrator or monitoring
+- 'revoked' - The claim was cancelled by an administrator or monitoring
   process.
 - 'waiting' - This claim is in the queue to become the owner of its resource.
-- 'withdrawn' - The client decided to withdraw its request for ownership of the
-  resource.
+- 'withdrawn' - The client decided to withdraw its claim for the resource.
 
 ## Performance
 Should support N requests per second.

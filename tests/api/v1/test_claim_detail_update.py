@@ -79,10 +79,16 @@ class ClaimPatchToCancelledStatusMixin(object):
 
     def test_updating_cancelled_claim_status_should_return_400(self):
         self._set_status()
-        statuses = ['active', 'released', 'revoked']
+        statuses = set(['aborted', 'active', 'released', 'revoked', 'withdrawn'])
+        statuses.remove(self.status)
         for status in statuses:
             response = self.patch(self.resource_url, {'status': status})
             self.assertEqual(400, response.status_code)
+
+    def test_update_status_from_cancelled_to_cancelled_should_return_204(self):
+        self._set_status()
+        update_response = self._set_status()
+        self.assertEqual(204, update_response.status_code)
 
 
 class ClaimPatchToAborted(ClaimPatchToCancelledStatusMixin, ClaimPatchBase):
@@ -218,7 +224,7 @@ class ClaimPatchError(ClaimPatchBase):
 
     def test_updating_released_claim_should_return_400(self):
         self.patch(self.resource_url, {'status': 'released'})
-        statuses = ['active', 'released', 'revoked']
+        statuses = ['active', 'aborted', 'revoked', 'withdrawn']
         for status in statuses:
             response = self.patch(self.resource_url, {'status': status})
             self.assertEqual(400, response.status_code)

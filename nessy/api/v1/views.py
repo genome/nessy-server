@@ -71,7 +71,7 @@ class ClaimView(Resource):
 
             try:
                 content = g.actor.update_claim(id, **data)
-                if _should_return_204(content, data):
+                if _should_return_204(data):
                     return None, 204
                 else:
                     return marshal(content, claim_fields), 200
@@ -95,7 +95,7 @@ _204_STATUSES = {
     'revoked',
     'withdrawn',
 }
-def _should_return_204(content, data):
+def _should_return_204(data):
     if 'status' in data:
         if data['status'] in _204_STATUSES:
             return True

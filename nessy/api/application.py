@@ -9,6 +9,7 @@ __all__ = ['create_app']
 def create_app(database_string, purge=False):
     factory = _create_factory(database_string, purge=purge)
     app = _create_app_from_blueprints()
+    app.db_factory = factory
 
     _attach_factory_to_app(factory, app)
 

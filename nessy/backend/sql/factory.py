@@ -30,6 +30,9 @@ class SqlActorFactory(FactoryBase):
     def create_actor(self):
         return actor.SqlActor(self._get_session())
 
+    def disconnect(self):
+        self._engine.dispose()
+
     def _get_session(self):
         if self._Session is None:
             self._initialize_session()

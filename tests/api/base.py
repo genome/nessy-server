@@ -12,6 +12,9 @@ class APITest(unittest.TestCase):
                 purge=True)
         self.client = self.app.test_client()
 
+    def tearDown(self):
+        self.app.db_factory.disconnect()
+
     def get(self, url, **kwargs):
         return _deserialize_response(self.client.get(url, query_string=kwargs))
 

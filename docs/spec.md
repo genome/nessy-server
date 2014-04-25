@@ -146,6 +146,11 @@ Updating `status` from 'active' or 'waiting' to a cancelled state ('aborted',
 - return HTTP 204 (No Content)
 - set `status` to the requested value
 
+Updating `status` from any of the "final" statuses ('aborted', 'released',
+'revoked', 'withdrawn') to that same value should:
+
+- return HTTP 204 (No Content)
+
 ### Errors
 - HTTP 400 (Bad Request)
     - Given unknown parameters

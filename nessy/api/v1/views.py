@@ -71,7 +71,7 @@ class ClaimView(Resource):
 
             try:
                 content = g.actor.update_claim(id, **data)
-                if content is None:
+                if _should_return_204(data):
                     return None, 204
                 else:
                     return marshal(content, claim_fields), 200
@@ -87,3 +87,16 @@ class ClaimView(Resource):
                 return e.as_dict, 503
             except exceptions.UnexpectedError as e:
                 return e.as_dict, 500
+
+
+_204_STATUSES = {
+    'aborted',
+    'released',
+    'revoked',
+    'withdrawn',
+}
+def _should_return_204(data):
+    if 'status' in data:
+        if data['status'] in _204_STATUSES:
+            return True
+    return False

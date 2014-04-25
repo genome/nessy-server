@@ -97,14 +97,17 @@ class SqlActor(ActorBase):
                         message='Unexpected error while updating ttl')
 
     def _update_status(self, claim, status):
+        if claim.status == status:
+            return claim
+
         if status == 'active':
             return self._activate(claim)
 
         elif status == 'released':
-            self._release(claim)
+            return self._release(claim)
 
         elif status in claim.CANCELLED_STATUSES:
-            self._cancel(claim, status)
+            return self._cancel(claim, status)
 
         else:  # pragma: no cover
             # The view is currently forbidding this, but we should still raise
@@ -142,6 +145,7 @@ class SqlActor(ActorBase):
 
         claim.set_status('released')
         self.session.commit()
+        return claim
 
     def _cancel(self, claim, status):
         query = self.session.query(models.Claim
@@ -160,3 +164,5 @@ class SqlActor(ActorBase):
                     status=locked_claim.status,
                     message='Cannot set status to "%s" from "%s"' % (
                         status, locked_claim.status))
+
+        return locked_claim

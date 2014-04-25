@@ -11,3 +11,7 @@ class FactoryBase(object):
     @abc.abstractmethod
     def create_actor(self):
         pass  # pragma: no cover
+
+    @abc.abstractmethod
+    def disconnect(self):
+        pass  # pragma: no cover

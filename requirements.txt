@@ -1,7 +1,7 @@
-flask
-flask-restful
-psycopg2
+flask == 0.10.1
+flask-restful == 0.2.12
+psycopg2 == 2.5.4
 python-dateutil
 python-statsd
 simplejson
-sqlalchemy
+sqlalchemy == 0.9.8
